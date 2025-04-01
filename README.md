@@ -11,12 +11,6 @@ A command-line interface for interacting with the Skyflow data privacy platform.
 
 ## Installation
 
-### Using npm (global installation)
-
-```bash
-npm install -g sky-cli
-```
-
 ### Local Development Installation
 
 ```bash
