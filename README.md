@@ -20,8 +20,8 @@ npm install -g sky-cli
 ### Local Development Installation
 
 ```bash
-# Clone the repository
-git clone https://github.com/SkyflowFoundry/skycli.git
+# Clone this repository. Make sure the URL is correct.
+git clone https://github.com/SkyflowFoundry/sky_cli.git
 cd sky-cli
 
 # Install dependencies
