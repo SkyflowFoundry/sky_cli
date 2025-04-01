@@ -1,0 +1,7 @@
+/msc/*
+node_modules
+node_modules/
+
+.clinerules
+.DS_Store
+package-lock.json

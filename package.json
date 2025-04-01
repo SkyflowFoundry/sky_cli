@@ -1,0 +1,32 @@
+{
+  "name": "sky-cli",
+  "version": "1.0.0",
+  "description": "Skyflow CLI for vault management",
+  "main": "dist/index.js",
+  "bin": {
+    "sky": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts"
+  },
+  "keywords": [
+    "skyflow",
+    "vault",
+    "cli"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/node": "^22.13.15",
+    "axios": "^1.8.4",
+    "commander": "^13.1.0",
+    "inquirer": "^12.5.0"
+  },
+  "devDependencies": {
+    "@types/inquirer": "^9.0.7",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.2"
+  }
+}
