@@ -1,5 +1,7 @@
 # Skyflow CLI (sky)
 
+> **⚠️ Warning:** This CLI is experimental and unsupported. Use it at your own risk. Contributions and feedback are welcome, but no guarantees are provided for stability or support.
+
 A command-line interface for interacting with the Skyflow data privacy platform. This CLI allows you to manage vaults, service accounts, and other Skyflow resources directly from your terminal.
 
 ## Features
@@ -13,6 +15,8 @@ A command-line interface for interacting with the Skyflow data privacy platform.
 
 ### Local Development Installation
 
+To use sky-cli, clone the repo from GitHub and then do a local npm installation. Note that you will need to have Node.js installed and configured, see package.json for dependencies.
+
 ```bash
 # Clone this repository. Make sure the URL is correct.
 git clone https://github.com/SkyflowFoundry/sky_cli.git
@@ -24,7 +28,7 @@ npm install
 # Build the CLI
 npm run build
 
-# Install the cloned CLI globally
+# Install the cloned CLI globally with npm
 npm i -g .
 ```
 
@@ -42,7 +46,7 @@ You will be prompted to enter:
 2. Your Skyflow Account ID
 3. Your Skyflow Workspace ID (required for vault creation)
 
-Alternatively, you can set these as environment variables:
+You can also set these as environment variables:
 
 ```bash
 export SKYFLOW_BEARER_TOKEN="your-bearer-token"
@@ -64,7 +68,7 @@ This will prompt you for all necessary information.
 
 ### Creating a Vault with Options
 
-You can also specify options directly:
+You can also specify options directly, for example:
 
 ```bash
 sky create-vault --name testvault --description "My test vault"
@@ -95,23 +99,25 @@ Using a schema file:
 sky create-vault --name testvault --schema /path/to/schema.json
 ```
 
-Simplest form (will prompt for name):
+Simplest form:
 
 ```bash
 sky create-vault
 ```
 
+![prompts](msc/prompts.png)
+
 ## Output
 
 Upon successful vault creation, the CLI will output:
 
-- Vault details (name, description, URL, etc.)
+- Vault details (name, description, ID, etc.)
 - Service account details (if created)
 - Environment variables for easy export
 
 Example:
 
-```
+```bash
 === Vault Created Successfully ===
 
 Name: testvault
