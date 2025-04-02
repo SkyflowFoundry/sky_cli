@@ -105,7 +105,7 @@ Simplest form:
 sky create-vault
 ```
 
-![prompts](msc/prompts.png)
+![prompts](assets/prompts.png)
 
 ## Output
 
