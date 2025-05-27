@@ -23,7 +23,7 @@ This document describes the Skyflow REST API endpoints used by the Sky CLI tool 
   "name": "string",
   "description": "string",
   "workspaceID": "string",
-  "vaultSchema": {}, // Optional: Custom JSON schema
+  "vaultSchema": {}, // Optional: Proprietary JSON document specific to Skyflow
   "templateID": "string" // Optional: Template ID (alternative to vaultSchema)
 }
 ```
