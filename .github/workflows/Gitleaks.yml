@@ -13,3 +13,4 @@ jobs:
   call-gitleaks:
     uses: SkyflowFoundry/.github/.github/workflows/Gitleaks Central workflow.yml@main
     secrets: inherit
+#
