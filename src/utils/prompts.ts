@@ -204,3 +204,20 @@ export const promptForMissingOptions = async (options: VaultOptions): Promise<Va
   
   return result;
 };
+
+// Prompt for vault ID if not provided
+export const promptForVaultId = async (): Promise<string> => {
+  const { vaultId } = await inquirer.prompt([
+    {
+      type: 'input',
+      name: 'vaultId',
+      message: 'Enter vault ID:',
+      validate: (input: string) => {
+        if (!input) return 'Please enter a vault ID or press Ctrl+C to cancel';
+        return true;
+      }
+    }
+  ]);
+  
+  return vaultId;
+};

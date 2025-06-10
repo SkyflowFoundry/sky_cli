@@ -1,0 +1,99 @@
+{
+  "connections": [
+    {
+      "name": "sample-api-connection",
+      "baseURL": "https://api.example.com",
+      "vaultID": "your-vault-id-here",
+      "routes": [
+        {
+          "path": "/users",
+          "method": "GET",
+          "contentType": "JSON",
+          "url": [
+            {
+              "action": "NOT_SELECTED",
+              "fieldName": "user_id",
+              "table": "users",
+              "column": "id",
+              "dataSelector": "$.id",
+              "dataSelectorRegex": "",
+              "transformFormat": "",
+              "encryptionType": "",
+              "redaction": "DEFAULT",
+              "sourceRegex": "",
+              "transformedRegex": ""
+            }
+          ],
+          "requestBody": [],
+          "responseBody": [
+            {
+              "action": "NOT_SELECTED",
+              "fieldName": "email",
+              "table": "users",
+              "column": "email",
+              "dataSelector": "$.email",
+              "dataSelectorRegex": "",
+              "transformFormat": "",
+              "encryptionType": "AES_GCM",
+              "redaction": "DEFAULT",
+              "sourceRegex": "",
+              "transformedRegex": ""
+            }
+          ],
+          "responseHeader": [],
+          "queryParams": [],
+          "requestHeader": [],
+          "name": "Get Users",
+          "description": "Retrieve user information",
+          "soapAction": "",
+          "mleType": "NOT_REQUIRED",
+          "preFieldRequestMessageActions": [
+            {
+              "type": "NOACTION",
+              "action": "",
+              "keyEncryptionAlgo": "",
+              "contentEncryptionAlgo": "",
+              "signatureAlgorithm": ""
+            }
+          ],
+          "postFieldRequestMessageActions": [
+            {
+              "type": "NOACTION",
+              "action": "",
+              "keyEncryptionAlgo": "",
+              "contentEncryptionAlgo": "",
+              "signatureAlgorithm": ""
+            }
+          ],
+          "preFieldResponseMessageActions": [
+            {
+              "type": "NOACTION",
+              "action": "",
+              "keyEncryptionAlgo": "",
+              "contentEncryptionAlgo": "",
+              "signatureAlgorithm": ""
+            }
+          ],
+          "postFieldResponseMessageActions": [
+            {
+              "type": "NOACTION",
+              "action": "",
+              "keyEncryptionAlgo": "",
+              "contentEncryptionAlgo": "",
+              "signatureAlgorithm": ""
+            }
+          ],
+          "tableUpsertInfo": [
+            {
+              "table": "users",
+              "column": "id"
+            }
+          ]
+        }
+      ],
+      "authMode": "NOAUTH",
+      "description": "Sample API connection for user management",
+      "denyPassThrough": false
+    }
+  ]
+}
