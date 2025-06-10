@@ -1,6 +1,6 @@
 import axios from 'axios';
 import fs from 'fs';
-import { VaultOptions, ServiceAccount, Role, VaultResponse } from '../types';
+import { VaultOptions, ServiceAccount, Role, VaultResponse, ConnectionConfig, ConnectionResponse } from '../types';
 import { verboseLog, verboseWarn, errorLog } from './logger';
 
 const API_BASE_URL = 'https://manage.skyflowapis.com/v1';
@@ -228,5 +228,84 @@ export const verifyVaultAccess = async (
     return true;
   } catch (error) {
     return false;
+  }
+};
+
+// Create a new connection in a vault
+export const createConnection = async (
+  vaultId: string,
+  connectionConfig: ConnectionConfig
+): Promise<ConnectionResponse> => {
+  if (!vaultId) {
+    throw new Error('Vault ID is required for connection creation');
+  }
+  
+  if (!connectionConfig.name || !connectionConfig.type) {
+    throw new Error('Connection name and type are required');
+  }
+  
+  verboseLog(`Creating connection "${connectionConfig.name}" of type "${connectionConfig.type}" in vault ${vaultId}`);
+  
+  try {
+    const payload = {
+      name: connectionConfig.name,
+      type: connectionConfig.type,
+      description: connectionConfig.description || `Connection created with Sky CLI on ${new Date().toISOString()}`,
+      settings: connectionConfig.settings || {}
+    };
+    
+    verboseLog('Connection creation payload:');
+    verboseLog(JSON.stringify(payload, null, 2));
+    
+    const response = await axios.post(
+      `${API_BASE_URL}/vaults/${vaultId}/connections`,
+      payload,
+      { headers: getHeaders() }
+    );
+    
+    verboseLog('Connection API Response:');
+    verboseLog(JSON.stringify(response.data, null, 2));
+    
+    // Extract connection ID from response
+    let connectionId: string;
+    if (typeof response.data === 'string') {
+      connectionId = response.data;
+    } else if (response.data && typeof response.data === 'object') {
+      const possibleIdFields = ['id', 'connectionID', 'connection_id', 'ID'];
+      connectionId = '';
+      
+      for (const field of possibleIdFields) {
+        if (response.data[field]) {
+          verboseLog(`Found connection ID in field "${field}": ${response.data[field]}`);
+          connectionId = response.data[field];
+          break;
+        }
+      }
+      
+      if (!connectionId) {
+        // If no specific ID field found, use the whole response as ID or generate one
+        connectionId = response.data.id || response.data.connectionID || `conn-${Date.now()}`;
+      }
+    } else {
+      connectionId = `conn-${Date.now()}`;
+    }
+    
+    const connectionResponse: ConnectionResponse = {
+      connectionID: connectionId,
+      name: connectionConfig.name,
+      type: connectionConfig.type,
+      description: connectionConfig.description,
+      vaultID: vaultId
+    };
+    
+    verboseLog('Mapped connection response:');  
+    verboseLog(JSON.stringify(connectionResponse, null, 2));
+    
+    return connectionResponse;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new Error(`Connection creation failed: ${error.response.status} - ${JSON.stringify(error.response.data)}`);
+    }
+    throw new Error(`Connection creation failed: ${error instanceof Error ? error.message : String(error)}`);
   }
 };

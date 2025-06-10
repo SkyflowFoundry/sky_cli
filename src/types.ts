@@ -39,3 +39,33 @@ export interface CreateVaultResult {
   serviceAccountID?: string;
   serviceAccountApiKey?: string;
 }
+
+export interface ConnectionConfig {
+  name: string;
+  type: string;
+  description?: string;
+  settings: {
+    [key: string]: any;
+  };
+}
+
+export interface ConnectionOptions {
+  filePath: string;
+  vaultId?: string;
+  verbose?: boolean;
+}
+
+export interface ConnectionResponse {
+  connectionID: string;
+  name: string;
+  type: string;
+  description?: string;
+  vaultID: string;
+}
+
+export interface CreateConnectionResult {
+  connections: ConnectionResponse[];
+  successCount: number;
+  errorCount: number;
+  errors?: string[];
+}

@@ -1,0 +1,36 @@
+{
+  "connections": [
+    {
+      "name": "production-postgres",
+      "type": "postgres",
+      "description": "Production PostgreSQL database connection",
+      "settings": {
+        "host": "prod-db.example.com",
+        "port": 5432,
+        "database": "production",
+        "username": "app_user",
+        "ssl": true
+      }
+    },
+    {
+      "name": "api-gateway",
+      "type": "http",
+      "description": "External API gateway connection",
+      "settings": {
+        "url": "https://api.example.com/v1",
+        "timeout": 30000,
+        "retries": 3
+      }
+    },
+    {
+      "name": "redis-cache",
+      "type": "redis",
+      "description": "Redis cache connection",
+      "settings": {
+        "host": "redis.example.com",
+        "port": 6379,
+        "database": 0
+      }
+    }
+  ]
+}
