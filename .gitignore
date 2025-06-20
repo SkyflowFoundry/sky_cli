@@ -1,7 +1,8 @@
 /msc/*
 node_modules
 node_modules/
-
+dist
+dist/*
 .clinerules
 .DS_Store
 package-lock.json

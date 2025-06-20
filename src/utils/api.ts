@@ -1,6 +1,6 @@
 import axios from 'axios';
 import fs from 'fs';
-import { VaultOptions, ServiceAccount, Role, VaultResponse, Connection } from '../types';
+import { VaultOptions, ServiceAccount, Role, VaultResponse, Connection, CreateConnectionResponse } from '../types';
 import { verboseLog, verboseWarn, errorLog } from './logger';
 
 const API_BASE_URL = 'https://manage.skyflowapis.com/v1';
@@ -48,7 +48,7 @@ export const createVault = async (options: VaultOptions): Promise<VaultResponse>
   try {
     const payload: Record<string, any> = {
       name,
-      description: description || `Vault created with Sky CLI on ${new Date().toISOString()}`,
+      description: description || name,
       workspaceID
     };
 
@@ -232,43 +232,21 @@ export const verifyVaultAccess = async (
 };
 
 // Create a new connection
-export const createConnection = async (connection: Connection): Promise<string> => {
+export const createConnection = async (connection: Connection): Promise<CreateConnectionResponse> => {
   try {
     verboseLog('Creating connection with payload:');
     verboseLog(JSON.stringify(connection, null, 2));
-
+    const route = connection.mode == "EGRESS" ? 'outboundRoutes' : 'inboundRoutes';
     const response = await axios.post(
-      `${API_BASE_URL}/vaults/${connection.vaultID}/connections`,
+      `${API_BASE_URL}/gateway/${route}`,
       connection,
       { headers: getHeaders() }
     );
 
     verboseLog('Connection creation API response:');
     verboseLog(JSON.stringify(response.data, null, 2));
-
-    // Extract the connection ID from the response
-    let connectionId: string | undefined;
     
-    if (typeof response.data === 'string') {
-      connectionId = response.data;
-    } else if (response.data && typeof response.data === 'object') {
-      const possibleIdFields = ['id', 'connectionID', 'connection_id', 'ID'];
-      
-      for (const field of possibleIdFields) {
-        if (response.data[field]) {
-          verboseLog(`Found connection ID in field "${field}": ${response.data[field]}`);
-          connectionId = response.data[field];
-          break;
-        }
-      }
-    }
-    
-    if (!connectionId) {
-      errorLog('Could not find connection ID in the API response', { responseData: response.data });
-      throw new Error('Connection ID not found in API response');
-    }
-    
-    return connectionId;
+    return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       errorLog(`Connection creation failed: ${error.response.status}`, error.response.data);

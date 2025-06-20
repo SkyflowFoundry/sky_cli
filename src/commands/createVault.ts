@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import * as api from '../utils/api';
 import * as prompts from '../utils/prompts';
-import { VaultOptions, CreateVaultResult } from '../types';
+import { CreateVaultResult } from '../types';
 import { loadConfig } from '../utils/config';
 import { setVerbose, verboseLog } from '../utils/logger';
 import inquirer from 'inquirer';
@@ -12,11 +12,11 @@ export const createVaultCommand = (program: Command): void => {
   program
     .command('create-vault')
     .description('Create a new Skyflow vault')
-    .option('--name <name>', 'Name for the vault (lowercase, no special characters)')
+    .option('--name <name>', 'Name for the vault (no special characters)')
     .option('--template <template>', 'Template to use for the vault')
     .option('--description <description>', 'Description for the vault')
     .option('--master-key <key>', 'Master encryption key for the vault')
-    .option('--create-service-account [boolean]', 'Create a service account for the vault', true)
+    .option('--create-service-account [boolean]', 'Create a service account for the vault', false)
     .option('--schema <path>', 'Path to JSON schema file for the vault')
     .option('--workspace-id <id>', 'Workspace ID for the vault')
     .option('--verbose', 'Enable verbose logging for debugging')
@@ -149,7 +149,7 @@ export const createVaultCommand = (program: Command): void => {
           console.log(`Service Account API Key: ${result.serviceAccountApiKey}`);
         }
         
-        console.log('\nEnvironment Variables:');
+        console.log('\nExport the following environment variables:');
         console.log(`export SKYFLOW_VAULT_ID=${result.vault.vaultID}`);
         console.log(`export SKYFLOW_CLUSTER_ID=${result.vault.clusterID}`);
         console.log(`export SKYFLOW_VAULT_URL=${result.vault.vaultURL}`);

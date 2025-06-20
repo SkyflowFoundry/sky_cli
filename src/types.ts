@@ -40,9 +40,14 @@ export interface CreateVaultResult {
   serviceAccountApiKey?: string;
 }
 
+export interface FunctionInfo {
+  deploymentID: string;
+  method: string;
+  template: "NO_TEMPLATE" | "HTTP_TEMPLATE";
+}
 // Connection-related interfaces
-export interface FieldMapping {
-  action: 'NOT_SELECTED' | 'INSERT' | 'UPDATE' | 'DELETE';
+export interface FieldMappingConfig {
+  action: "NOT_SELECTED" | "TOKENIZATION" | "DETOKENIZATION" | "ENCRYPTION";
   fieldName: string;
   table: string;
   column: string;
@@ -50,17 +55,22 @@ export interface FieldMapping {
   dataSelectorRegex: string;
   transformFormat: string;
   encryptionType: string;
-  redaction: 'DEFAULT' | 'NONE' | 'CUSTOM';
+  redaction: "DEFAULT" | "REDACTED" | "MASKED" | "PLAIN_TEXT";
+  functionName?: string;
+  functionInfo: FunctionInfo | null;
   sourceRegex: string;
   transformedRegex: string;
 }
 
 export interface MessageAction {
-  type: 'NOACTION' | 'ENCRYPT' | 'DECRYPT' | 'SIGN' | 'VERIFY';
+  type: "NOACTION" | "ENCRYPTION" | "DECRYPTION" | "SIGN" | "VERIFY" | "FIND_AND_REPLACE";
   action: string;
   keyEncryptionAlgo: string;
   contentEncryptionAlgo: string;
   signatureAlgorithm: string;
+  sourceRegex: string;
+  transformedRegex: string;
+  target: string
 }
 
 export interface TableUpsertInfo {
@@ -68,45 +78,57 @@ export interface TableUpsertInfo {
   column: string;
 }
 
-export interface ConnectionRoute {
+export interface RouteConfig {
   path: string;
   method: string;
-  contentType: 'JSON' | 'XML' | 'FORM';
-  url: FieldMapping[];
-  requestBody: FieldMapping[];
-  responseBody: FieldMapping[];
-  responseHeader: FieldMapping[];
-  queryParams: FieldMapping[];
-  requestHeader: FieldMapping[];
+  contentType:
+    | "JSON"
+    | "XML"
+    | "X_WWW_FORM_URLENCODED"
+    | "X_MULTIPART_FORM_DATA"
+    | "UNKNOWN_CONTENT";
+  url: FieldMappingConfig[];
+  requestBody: FieldMappingConfig[];
+  responseBody: FieldMappingConfig[];
+  responseHeader: FieldMappingConfig[];
+  queryParams: FieldMappingConfig[];
+  requestHeader: FieldMappingConfig[];
   name: string;
   description: string;
   soapAction: string;
-  mleType: 'NOT_REQUIRED' | 'REQUIRED';
+  mleType: "NOT_REQUIRED" | "MANDATORY";
   preFieldRequestMessageActions: MessageAction[];
   postFieldRequestMessageActions: MessageAction[];
   preFieldResponseMessageActions: MessageAction[];
   postFieldResponseMessageActions: MessageAction[];
   tableUpsertInfo: TableUpsertInfo[];
+  invocationURL?: string;
 }
 
-export interface Connection {
+export interface ConnectionConfig {
   ID?: string;
   name: string;
-  baseURL: string;
+  mode?: string;
+  baseURL?: string;
   vaultID: string;
-  routes: ConnectionRoute[];
-  authMode: 'NOAUTH' | 'BASIC' | 'BEARER' | 'OAUTH2';
+  routes: RouteConfig[];
+  authMode: "NOAUTH" | "MTLS" | "SHAREDKEY";
   description: string;
-  denyPassThrough: boolean;
+  denyPassThrough?: boolean;
+  BasicAudit?: object;
+  formEncodedKeysPassThrough?: boolean;
 }
 
+export type Connection = Omit<ConnectionConfig, "ID"|"BasicAudit"> & { routes: Route[] };
+export type Route = Omit<RouteConfig, "invocationURL">;
 export interface ConnectionConfigFile {
-  connections?: Connection[];
+  connections?: ConnectionConfig[] | ConnectionConfig;
 }
 
-export interface CreateConnectionResult {
-  connectionID: string;
-  name: string;
-  status: 'success' | 'failed';
+export interface CreateConnectionResponse {
+  ID?: string;
+  connectionURL?: string;
+  name?: string;
+  status?: "success" | "failed";
   error?: string;
 }

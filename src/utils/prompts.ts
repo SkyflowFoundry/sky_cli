@@ -23,13 +23,13 @@ export const promptForName = async (providedName?: string): Promise<string> => {
     {
       type: 'input',
       name: 'name',
-      message: 'Enter vault name (lowercase, no special chars):',
+      message: 'Enter vault name (no special chars):',
       default: defaultName,
       validate: (input: string) => {
-        if (/^[a-z0-9-]+$/.test(input)) {
+        if (/^[a-zA-Z0-9-]+$/.test(input)) {
           return true;
         }
-        return 'Name must be lowercase alphanumeric with hyphens only';
+        return 'Name must be alphanumeric with hyphens only';
       }
     }
   ]);
@@ -195,7 +195,7 @@ export const promptForMissingOptions = async (options: VaultOptions): Promise<Va
         type: 'confirm',
         name: 'createServiceAccount',
         message: 'Create a service account for this vault?',
-        default: true
+        default: false
       }
     ]);
     
@@ -213,7 +213,7 @@ export const promptForVaultId = async (): Promise<string> => {
       name: 'vaultId',
       message: 'Enter vault ID:',
       validate: (input: string) => {
-        if (!input) return 'Please enter a vault ID or press Ctrl+C to cancel';
+        if (!input || !process.env.SKYFLOW_VAULT_ID) return 'Please enter a vault ID or press Ctrl+C to cancel';
         return true;
       }
     }
