@@ -126,7 +126,7 @@ Vault URL: (not yet populated)
 Cluster ID: (not yet populated)
 Vault ID: v123456
 Service Account ID: sa123456
-Service Account API Key: sky-abc123-xyz789
+Service Account API Key: sky-xxxxxxx
 
 Environment Variables:
 export SKYFLOW_VAULT_ID=v123456
@@ -134,7 +134,7 @@ export SKYFLOW_CLUSTER_ID=
 export SKYFLOW_VAULT_URL=
 export SKYFLOW_WORKSPACE_ID=ws123456
 export SKYFLOW_SERVICE_ACCOUNT_ID=sa123456
-export SKYFLOW_API_KEY=sky-abc123-xyz789
+export SKYFLOW_API_KEY=sky-xxxxxxx
 ```
 
 ## License

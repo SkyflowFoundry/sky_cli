@@ -113,7 +113,7 @@ export const createConnectionCommand = (program: Command): void => {
               const { invocationURL, ...rest } = route;
               return {
                 ...rest,
-              };
+              } as Route;
             });
             // Set vault ID if not already specified
             return {
