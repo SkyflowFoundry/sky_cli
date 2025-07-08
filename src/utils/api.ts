@@ -48,7 +48,7 @@ export const createVault = async (options: VaultOptions): Promise<VaultResponse>
   try {
     const payload: Record<string, any> = {
       name,
-      description: description || name,
+      description: description || `Vault created with Sky CLI on ${new Date().toISOString()}`,
       workspaceID
     };
 
