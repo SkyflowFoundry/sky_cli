@@ -3,6 +3,7 @@
 import { Command } from 'commander';
 import { createVaultCommand } from './commands/createVault';
 import { configureCommand } from './commands/configure';
+import { createConnectionCommand } from './commands/createConnection';
 import { loadConfig } from './utils/config';
 import { setVerbose } from './utils/logger';
 
@@ -24,6 +25,7 @@ program
 // Register commands
 configureCommand(program);
 createVaultCommand(program);
+createConnectionCommand(program);
 
 // Error handler for authentication
 program.hook('preAction', async (thisCommand, actionCommand) => {
