@@ -130,6 +130,118 @@ This document describes the Skyflow REST API endpoints used by the Sky CLI tool 
 
 **Used in**: `create-vault` command to verify service account access (`src/utils/api.ts:218`)
 
+### 6. Create Connection (Inbound Routes)
+**Endpoint**: `POST /gateway/inboundRoutes`  
+**Purpose**: Creates inbound connection routes for data ingress
+
+**Request Body**:
+```json
+{
+  "name": "string",
+  "description": "string",
+  "vaultID": "string",
+  "mode": "INGRESS",
+  "authMode": "NOAUTH|MTLS|SHAREDKEY",
+  "baseURL": "string",
+  "denyPassThrough": boolean,
+  "formEncodedKeysPassThrough": boolean,
+  "routes": [
+    {
+      "name": "string",
+      "description": "string",
+      "path": "string",
+      "method": "string",
+      "contentType": "JSON|XML|X_WWW_FORM_URLENCODED|X_MULTIPART_FORM_DATA|UNKNOWN_CONTENT",
+      "soapAction": "string",
+      "mleType": "NOT_REQUIRED|MANDATORY",
+      "url": [],
+      "requestBody": [],
+      "responseBody": [],
+      "requestHeader": [],
+      "responseHeader": [],
+      "queryParams": [],
+      "preFieldRequestMessageActions": [],
+      "postFieldRequestMessageActions": [],
+      "preFieldResponseMessageActions": [],
+      "postFieldResponseMessageActions": [],
+      "tableUpsertInfo": []
+    }
+  ]
+}
+```
+
+**Response**:
+```json
+{
+  "ID": "connection-id-string",
+  "connectionURL": "https://connection-url"
+}
+```
+
+**Used in**: `create-connection` command for INGRESS mode connections (`src/utils/api.ts:253`)
+
+### 7. Create Connection (Outbound Routes)
+**Endpoint**: `POST /gateway/outboundRoutes`  
+**Purpose**: Creates outbound connection routes for data egress
+
+**Request Body**: Same structure as inbound routes with `"mode": "EGRESS"`
+
+**Response**: Same structure as inbound routes
+
+**Used in**: `create-connection` command for EGRESS mode connections (`src/utils/api.ts:253`)
+
+### Field Mapping Structure
+
+Both inbound and outbound routes support detailed field mapping configurations:
+
+```json
+{
+  "action": "NOT_SELECTED|TOKENIZATION|DETOKENIZATION|ENCRYPTION",
+  "fieldName": "string",
+  "table": "string",
+  "column": "string",
+  "dataSelector": "string",
+  "dataSelectorRegex": "string",
+  "transformFormat": "string",
+  "encryptionType": "string",
+  "redaction": "DEFAULT|REDACTED|MASKED|PLAIN_TEXT",
+  "functionName": "string",
+  "functionInfo": {
+    "deploymentID": "string",
+    "method": "string",
+    "template": "NO_TEMPLATE|HTTP_TEMPLATE"
+  },
+  "sourceRegex": "string",
+  "transformedRegex": "string"
+}
+```
+
+### Message Action Structure
+
+Routes support message actions for encryption, decryption, signing, and verification:
+
+```json
+{
+  "type": "NOACTION|ENCRYPTION|DECRYPTION|SIGN|VERIFY|FIND_AND_REPLACE",
+  "action": "string",
+  "keyEncryptionAlgo": "string",
+  "contentEncryptionAlgo": "string",
+  "signatureAlgorithm": "string",
+  "sourceRegex": "string",
+  "transformedRegex": "string",
+  "target": "string"
+}
+```
+
+### Table Upsert Information
+
+```json
+{
+  "table": "string",
+  "column": "string"
+}
+```
+
 ## Command Flows
 
 ### Configure Command Flow
@@ -200,6 +312,35 @@ flowchart TD
 
 ## Data Flow Between API Calls
 
+### Create Connection Flow:
+
+```mermaid
+sequenceDiagram
+    participant CLI
+    participant User
+    participant ConfigFile
+    participant SkyflowAPI
+    
+    User->>CLI: sky create-connection --file-path connections.json
+    CLI->>ConfigFile: Read configuration file
+    ConfigFile-->>CLI: JSON configuration
+    CLI->>CLI: Parse and validate connections
+    CLI->>User: Prompt for vault ID (if not provided)
+    User-->>CLI: Vault ID
+    
+    loop For each connection
+        alt INGRESS mode
+            CLI->>SkyflowAPI: POST /gateway/inboundRoutes
+        else EGRESS mode
+            CLI->>SkyflowAPI: POST /gateway/outboundRoutes
+        end
+        Note over CLI,SkyflowAPI: Connection payload with routes, field mappings, message actions
+        SkyflowAPI-->>CLI: {ID: "conn-123", connectionURL: "https://..."}
+    end
+    
+    CLI->>User: Display summary (successful + failed connections)
+```
+
 ### Create Vault with Service Account Flow:
 
 ```mermaid
@@ -230,6 +371,60 @@ sequenceDiagram
     
     CLI->>User: Display vault + service account details
 ```
+
+### Create Connection Command Flow
+
+The `create-connection` command (`src/commands/createConnection.ts`) executes the following sequence:
+
+```mermaid
+flowchart TD
+    A[User runs 'sky create-connection --file-path config.json'] --> B[Validate file path and read config]
+    B --> C[Parse JSON configuration]
+    C --> D[Extract connections array]
+    D --> E[Validate connection configurations]
+    E --> F[Get vault ID from option/env/prompt]
+    F --> G{For each connection}
+    G --> H{Check connection mode}
+    H -->|INGRESS| I[API: POST /gateway/inboundRoutes]
+    H -->|EGRESS| J[API: POST /gateway/outboundRoutes]
+    I --> K[Store success result]
+    J --> K
+    K --> L{More connections?}
+    L -->|Yes| G
+    L -->|No| M[Display summary]
+    M --> N{Any failures?}
+    N -->|Yes| O[Exit with error code 1]
+    N -->|No| P[Exit successfully]
+```
+
+#### Detailed API Sequence for Create Connection:
+
+1. **File Validation and Parsing** (`src/commands/createConnection.ts:34-84`)
+   - **Input**: Configuration file path from `--file-path` option
+   - **Process**: Check file existence, read content, parse JSON
+   - **Output**: Parsed configuration object
+
+2. **Connection Array Extraction** (`src/commands/createConnection.ts:72-84`)
+   - **Input**: Parsed configuration (array or object with connections property)
+   - **Process**: Extract connections array, validate structure
+   - **Output**: Array of connection configurations
+
+3. **Vault ID Resolution** (`src/commands/createConnection.ts:46-52`)
+   - **Input**: `--vault-id` option, `SKYFLOW_VAULT_ID` env var, or interactive prompt
+   - **Process**: Use provided vault ID or prompt user
+   - **Output**: Vault ID string
+
+4. **Connection Creation Loop** (`src/commands/createConnection.ts:134-175`)
+   - **For each connection**:
+     - **Input**: Connection configuration with routes
+     - **API Call**: `POST /gateway/inboundRoutes` or `POST /gateway/outboundRoutes`
+     - **Process**: Send connection payload based on mode (INGRESS/EGRESS)
+     - **Output**: Connection ID and URL or error message
+
+5. **Result Summary** (`src/commands/createConnection.ts:178-203`)
+   - **Input**: Array of results (success/failure for each connection)
+   - **Process**: Count successful and failed connections, display summary
+   - **Output**: Summary statistics and exit code
 
 ## Error Handling
 
@@ -278,3 +473,109 @@ export SKYFLOW_API_KEY=sa-api-key
 ```
 
 These variables can be used directly in applications that integrate with the created Skyflow vault.
+
+## Connection Configuration Examples
+
+### Simple Inbound Connection
+
+```json
+{
+  "connections": [
+    {
+      "name": "api-gateway",
+      "description": "Main API gateway connection",
+      "mode": "INGRESS",
+      "vaultID": "vault-123",
+      "authMode": "NOAUTH",
+      "routes": [
+        {
+          "name": "user-data",
+          "description": "User data ingestion route",
+          "path": "/api/users",
+          "method": "POST",
+          "contentType": "JSON",
+          "mleType": "NOT_REQUIRED",
+          "requestBody": [
+            {
+              "action": "TOKENIZATION",
+              "fieldName": "email",
+              "table": "users",
+              "column": "email",
+              "dataSelector": "$.email",
+              "redaction": "DEFAULT"
+            }
+          ],
+          "responseBody": [],
+          "preFieldRequestMessageActions": [],
+          "postFieldRequestMessageActions": [],
+          "preFieldResponseMessageActions": [],
+          "postFieldResponseMessageActions": [],
+          "tableUpsertInfo": []
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Complex Connection with Encryption and Field Mappings
+
+```json
+{
+  "connections": [
+    {
+      "name": "secure-webhook",
+      "description": "Secure webhook with encryption",
+      "mode": "EGRESS",
+      "vaultID": "vault-456",
+      "authMode": "MTLS",
+      "baseURL": "https://api.example.com",
+      "routes": [
+        {
+          "name": "secure-data-export",
+          "description": "Export encrypted data",
+          "path": "/export",
+          "method": "POST",
+          "contentType": "JSON",
+          "mleType": "MANDATORY",
+          "requestBody": [
+            {
+              "action": "DETOKENIZATION",
+              "fieldName": "userId",
+              "table": "users",
+              "column": "user_id",
+              "dataSelector": "$.user.id",
+              "redaction": "PLAIN_TEXT"
+            }
+          ],
+          "preFieldRequestMessageActions": [
+            {
+              "type": "ENCRYPTION",
+              "action": "encrypt-payload",
+              "keyEncryptionAlgo": "RSA-OAEP",
+              "contentEncryptionAlgo": "AES-GCM",
+              "target": "request.body"
+            }
+          ],
+          "postFieldRequestMessageActions": [],
+          "preFieldResponseMessageActions": [],
+          "postFieldResponseMessageActions": [
+            {
+              "type": "VERIFY",
+              "action": "verify-signature",
+              "signatureAlgorithm": "RS256",
+              "target": "response.body"
+            }
+          ],
+          "tableUpsertInfo": [
+            {
+              "table": "audit_log",
+              "column": "export_timestamp"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```

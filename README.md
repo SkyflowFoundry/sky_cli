@@ -8,6 +8,7 @@ A command-line interface for interacting with the Skyflow data privacy platform.
 
 - Create and manage vaults
 - Create and manage service accounts
+- Create and manage connections (inbound/outbound routes)
 - Assign roles to service accounts
 - Interactive prompts for missing options
 
@@ -107,7 +108,183 @@ sky create-vault
 
 ![prompts](assets/prompts.png)
 
-## Output
+### Creating Connections
+
+The `create-connection` command allows you to create inbound and outbound connection routes from a JSON configuration file.
+
+#### Basic Usage
+
+```bash
+sky create-connection --file-path /path/to/connections.json
+```
+
+#### Available Options
+
+- `--file-path <path>`: Path to connection configuration file (required)
+- `--vault-id <id>`: ID of the vault (optional if SKYFLOW_VAULT_ID env var is set)
+- `--verbose`: Enable detailed logging for debugging purposes
+
+#### Configuration File Format
+
+The configuration file can be either:
+1. A direct array of connection configurations
+2. An object with a `connections` property containing the array
+
+**Direct Array Format:**
+```json
+[
+  {
+    "name": "my-connection",
+    "description": "Example connection",
+    "mode": "INGRESS",
+    "vaultID": "vault-123",
+    "authMode": "NOAUTH",
+    "routes": [...]
+  }
+]
+```
+
+**Object Format:**
+```json
+{
+  "connections": [
+    {
+      "name": "my-connection",
+      "description": "Example connection",
+      "mode": "INGRESS",
+      "vaultID": "vault-123",
+      "authMode": "NOAUTH",
+      "routes": [...]
+    }
+  ]
+}
+```
+
+#### Connection Properties
+
+- `name` (required): Name of the connection
+- `description` (required): Description of the connection
+- `vaultID` (required): ID of the target vault
+- `mode`: Connection mode - "INGRESS" (inbound) or "EGRESS" (outbound)
+- `authMode`: Authentication mode - "NOAUTH", "MTLS", or "SHAREDKEY"
+- `baseURL`: Base URL for the connection
+- `routes` (required): Array of route configurations
+- `denyPassThrough`: Whether to deny pass-through requests
+- `formEncodedKeysPassThrough`: Whether to pass through form-encoded keys
+
+#### Route Configuration
+
+Each route in the `routes` array supports:
+
+- `name` (required): Name of the route
+- `description`: Description of the route
+- `path`: URL path for the route
+- `method`: HTTP method (GET, POST, PUT, DELETE, etc.)
+- `contentType`: Content type - "JSON", "XML", "X_WWW_FORM_URLENCODED", "X_MULTIPART_FORM_DATA", or "UNKNOWN_CONTENT"
+- `soapAction`: SOAP action for XML content
+- `mleType`: MLE (Message Level Encryption) requirement - "NOT_REQUIRED" or "MANDATORY"
+
+#### Field Mapping Configuration
+
+Routes can include field mappings for different parts of the request/response:
+
+- `url`: URL field mappings
+- `requestBody`: Request body field mappings
+- `responseBody`: Response body field mappings
+- `requestHeader`: Request header field mappings
+- `responseHeader`: Response header field mappings
+- `queryParams`: Query parameter field mappings
+
+Each field mapping includes:
+```json
+{
+  "action": "TOKENIZATION|DETOKENIZATION|ENCRYPTION|NOT_SELECTED",
+  "fieldName": "field-name",
+  "table": "table-name",
+  "column": "column-name",
+  "dataSelector": "selector-expression",
+  "dataSelectorRegex": "regex-pattern",
+  "transformFormat": "format",
+  "encryptionType": "encryption-type",
+  "redaction": "DEFAULT|REDACTED|MASKED|PLAIN_TEXT",
+  "sourceRegex": "source-regex",
+  "transformedRegex": "transformed-regex"
+}
+```
+
+#### Message Actions
+
+Routes support message actions at different stages:
+
+- `preFieldRequestMessageActions`: Actions before processing request fields
+- `postFieldRequestMessageActions`: Actions after processing request fields
+- `preFieldResponseMessageActions`: Actions before processing response fields
+- `postFieldResponseMessageActions`: Actions after processing response fields
+
+Message action types:
+```json
+{
+  "type": "NOACTION|ENCRYPTION|DECRYPTION|SIGN|VERIFY|FIND_AND_REPLACE",
+  "action": "action-name",
+  "keyEncryptionAlgo": "algorithm",
+  "contentEncryptionAlgo": "algorithm",
+  "signatureAlgorithm": "algorithm",
+  "sourceRegex": "source-pattern",
+  "transformedRegex": "transformed-pattern",
+  "target": "target-location"
+}
+```
+
+#### Table Upsert Configuration
+
+```json
+{
+  "tableUpsertInfo": [
+    {
+      "table": "table-name",
+      "column": "column-name"
+    }
+  ]
+}
+```
+
+#### Example Usage
+
+**Simple connection with basic route:**
+```bash
+sky create-connection --file-path simple-connection.json --vault-id vault-123
+```
+
+**With verbose logging:**
+```bash
+sky create-connection --file-path connections.json --verbose
+```
+
+**Using environment variable for vault ID:**
+```bash
+export SKYFLOW_VAULT_ID=vault-123
+sky create-connection --file-path connections.json
+```
+
+#### Expected Output
+
+The command will output progress for each connection:
+```
+Creating 2 connection(s)...
+
+[1/2] Creating connection: api-gateway
+Successfully created connection "api-gateway" (ID: conn-abc123)
+
+[2/2] Creating connection: webhook-handler
+Successfully created connection "webhook-handler" (ID: conn-def456)
+
+Summary:
+Successfully created: 2 connection(s)
+      - api-gateway (ID: conn-abc123)
+      - webhook-handler (ID: conn-def456)
+```
+
+## Vault Creation Output
 
 Upon successful vault creation, the CLI will output:
 
