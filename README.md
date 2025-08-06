@@ -8,6 +8,7 @@ A command-line interface for interacting with the Skyflow data privacy platform.
 
 - Create and manage vaults
 - Create and manage service accounts
+- Create and manage connections
 - Assign roles to service accounts
 - Interactive prompts for missing options
 
@@ -136,6 +137,204 @@ export SKYFLOW_WORKSPACE_ID=ws123456
 export SKYFLOW_SERVICE_ACCOUNT_ID=sa123456
 export SKYFLOW_API_KEY=sky-xxxxxxx
 ```
+
+### Creating Connections
+
+The `create-connection` command allows you to create connections from a configuration file. Connections define how your application can securely interact with external services through Skyflow.
+
+#### Basic Usage
+
+```bash
+sky create-connection --file-path /path/to/connections.json
+```
+
+#### Available Options
+
+- `--file-path`: Path to the connection configuration file (required)
+- `--vault-id`: ID of the vault (optional if SKYFLOW_VAULT_ID environment variable is set)
+- `--verbose`: Enable detailed logging for debugging purposes
+
+#### Configuration File Format
+
+The configuration file should be a JSON file containing an array of connection definitions, or an object with a `connections` property containing the array.
+
+##### Direct Array Format
+
+```json
+[
+  {
+    "name": "my-api-connection",
+    "description": "Connection to external API service",
+    "vaultID": "v123456",
+    "authMode": "NOAUTH",
+    "baseURL": "https://api.example.com",
+    "routes": [
+      {
+        "name": "get-users",
+        "description": "Retrieve user data",
+        "path": "/users",
+        "method": "GET",
+        "contentType": "JSON",
+        "mleType": "NOT_REQUIRED",
+        "soapAction": "",
+        "url": [],
+        "requestBody": [],
+        "responseBody": [
+          {
+            "action": "TOKENIZATION",
+            "fieldName": "email",
+            "table": "users",
+            "column": "email",
+            "dataSelector": "$.users[*].email",
+            "dataSelectorRegex": "",
+            "transformFormat": "",
+            "encryptionType": "",
+            "redaction": "DEFAULT",
+            "functionInfo": null,
+            "sourceRegex": "",
+            "transformedRegex": ""
+          }
+        ],
+        "responseHeader": [],
+        "queryParams": [],
+        "requestHeader": [],
+        "preFieldRequestMessageActions": [],
+        "postFieldRequestMessageActions": [],
+        "preFieldResponseMessageActions": [],
+        "postFieldResponseMessageActions": [],
+        "tableUpsertInfo": []
+      }
+    ]
+  }
+]
+```
+
+##### Object Format
+
+```json
+{
+  "connections": [
+    {
+      "name": "my-api-connection",
+      "description": "Connection to external API service",
+      "vaultID": "v123456",
+      "authMode": "NOAUTH",
+      "routes": [...]
+    }
+  ]
+}
+```
+
+#### Connection Configuration Properties
+
+- `name`: Unique name for the connection (required)
+- `description`: Description of the connection's purpose (required)
+- `vaultID`: ID of the vault to use (required)
+- `authMode`: Authentication mode - `"NOAUTH"`, `"MTLS"`, or `"SHAREDKEY"` (required)
+- `baseURL`: Base URL for the external service (optional)
+- `mode`: Connection mode (optional)
+- `denyPassThrough`: Whether to deny pass-through requests (optional)
+- `formEncodedKeysPassThrough`: Whether to allow form-encoded keys pass-through (optional)
+- `routes`: Array of route definitions (required)
+
+#### Route Configuration Properties
+
+Each route in the `routes` array defines an endpoint and its data handling rules:
+
+- `name`: Route name (required)
+- `description`: Route description (required)
+- `path`: API endpoint path (required)
+- `method`: HTTP method - `"GET"`, `"POST"`, `"PUT"`, `"DELETE"`, etc. (required)
+- `contentType`: Content type - `"JSON"`, `"XML"`, `"X_WWW_FORM_URLENCODED"`, `"X_MULTIPART_FORM_DATA"`, or `"UNKNOWN_CONTENT"` (required)
+- `mleType`: MLE (Message Level Encryption) requirement - `"NOT_REQUIRED"` or `"MANDATORY"` (required)
+- `soapAction`: SOAP action for XML-based services (required, can be empty string)
+
+#### Field Mapping Arrays
+
+Each route contains several arrays for defining how data should be processed:
+
+- `url`: Field mappings for URL parameters
+- `requestBody`: Field mappings for request body data
+- `responseBody`: Field mappings for response body data
+- `responseHeader`: Field mappings for response headers
+- `queryParams`: Field mappings for query parameters
+- `requestHeader`: Field mappings for request headers
+
+#### Field Mapping Configuration
+
+Each field mapping defines how to handle sensitive data:
+
+```json
+{
+  "action": "TOKENIZATION",
+  "fieldName": "email",
+  "table": "users",
+  "column": "email",
+  "dataSelector": "$.users[*].email",
+  "dataSelectorRegex": "",
+  "transformFormat": "",
+  "encryptionType": "",
+  "redaction": "DEFAULT",
+  "functionInfo": null,
+  "sourceRegex": "",
+  "transformedRegex": ""
+}
+```
+
+- `action`: Data processing action - `"NOT_SELECTED"`, `"TOKENIZATION"`, `"DETOKENIZATION"`, or `"ENCRYPTION"`
+- `fieldName`: Name of the field to process
+- `table`: Skyflow table name for data storage
+- `column`: Skyflow column name for data storage
+- `dataSelector`: JSONPath selector for extracting data
+- `redaction`: Data redaction mode - `"DEFAULT"`, `"REDACTED"`, `"MASKED"`, or `"PLAIN_TEXT"`
+
+#### Message Actions
+
+Routes can also include message-level actions:
+
+- `preFieldRequestMessageActions`: Actions to execute before field processing on requests
+- `postFieldRequestMessageActions`: Actions to execute after field processing on requests
+- `preFieldResponseMessageActions`: Actions to execute before field processing on responses
+- `postFieldResponseMessageActions`: Actions to execute after field processing on responses
+
+#### Examples
+
+Create a single connection:
+
+```bash
+sky create-connection --file-path ./my-connection.json --vault-id v123456
+```
+
+Create connections with verbose logging:
+
+```bash
+sky create-connection --file-path ./connections.json --verbose
+```
+
+Using environment variable for vault ID:
+
+```bash
+export SKYFLOW_VAULT_ID=v123456
+sky create-connection --file-path ./connections.json
+```
+
+#### Output
+
+The command provides detailed feedback during execution:
+
+```bash
+Creating 1 connection(s)...
+
+[1/1] Creating connection: my-api-connection
+Successfully created connection "my-api-connection" (ID: conn_abc123)
+Successfully created connections.
+
+Summary:
+Successfully created: 1 connection(s)
+      - my-api-connection (ID: conn_abc123)
+```
+
+If any connections fail, the command will continue with remaining connections and provide a summary of successes and failures.
 
 ## License
 
