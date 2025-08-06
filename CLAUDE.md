@@ -8,6 +8,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Development**: `npm run dev` - Runs the CLI directly with ts-node for development
 - **Start**: `npm run start` - Runs the compiled CLI from dist/index.js
 - **Local installation**: `npm i -g .` - Installs the CLI globally from the current directory
+- **Testing**: `npm test` - Runs the full test suite with Jest
+- **Test Watch**: `npm run test:watch` - Runs tests in watch mode for development
+- **Test Coverage**: `npm run test:coverage` - Runs tests and generates coverage report
 
 ## Architecture Overview
 
@@ -41,3 +44,67 @@ The CLI interacts with Skyflow's REST APIs for:
 - TypeScript compilation targets ES2018 with CommonJS modules
 - Output goes to `dist/` directory
 - Executable binary is `dist/index.js` with shebang for direct execution
+
+## Testing
+
+The project uses Jest as the testing framework with TypeScript support via ts-jest.
+
+### Test Structure
+
+- **Test Files**: Located in `src/__tests__/` directory
+- **Test Naming**: Use `*.test.ts` extension for test files
+- **Setup**: Global test setup in `src/__tests__/setup.ts`
+
+### Running Tests
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode (useful during development)
+npm run test:watch
+
+# Run tests with coverage report
+npm run test:coverage
+```
+
+### Test Coverage
+
+Coverage reports are generated in the `coverage/` directory with multiple formats:
+- **HTML**: Open `coverage/index.html` in browser for interactive report
+- **LCOV**: Machine-readable format for CI/CD integration
+- **Text**: Console output during test runs
+- **JSON Summary**: Programmatic access to coverage metrics
+
+### Coverage Thresholds
+
+The project maintains the following minimum coverage requirements:
+- **Branches**: 70%
+- **Functions**: 80%
+- **Lines**: 80%
+- **Statements**: 80%
+
+### Test Categories
+
+1. **Command Tests**: Unit tests for CLI commands (`create-vault`, `create-connection`)
+   - Mock external API calls
+   - Test error handling and edge cases
+   - Verify command argument parsing and validation
+
+2. **Utility Tests**: Unit tests for utility functions
+   - Logger functionality and verbosity levels
+   - Prompt validation and user input handling
+   - Configuration management
+
+3. **Integration Tests**: End-to-end testing of command workflows
+   - Full command execution paths
+   - API integration points
+   - Error scenarios and recovery
+
+### Mocking Strategy
+
+The test suite uses comprehensive mocking for:
+- **External APIs**: All Skyflow API calls are mocked
+- **File System**: File operations use jest mocks
+- **User Input**: Inquirer prompts are mocked
+- **Console Output**: Console methods are mocked to prevent test noise

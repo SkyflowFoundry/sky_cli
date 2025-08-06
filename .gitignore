@@ -6,3 +6,8 @@ dist/*
 .clinerules
 .DS_Store
 package-lock.json
+
+# Test artifacts
+coverage/
+*.lcov
+.nyc_output
