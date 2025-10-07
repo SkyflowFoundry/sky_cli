@@ -11,10 +11,13 @@ import {
   initializeSkyflowClient,
   handleSkyflowError,
   resolveVaultId,
+  extractClusterIdFromUrl,
 } from '../utils/skyflow';
 import { logVerbose } from '../utils/logger';
 import { readStdin } from '../utils/input';
 import { ENTITY_MAP, AVAILABLE_ENTITIES } from '../utils/entities';
+import { promptForVaultId, promptForClusterId } from '../utils/prompts';
+import { loadConfig, updateLastVaultDetails } from '../utils/config';
 
 
 export const reidentifyCommand = (program: Command): void => {
@@ -99,15 +102,46 @@ export const reidentifyCommand = (program: Command): void => {
           logVerbose('No entity options specified, returning all as plain text');
         }
 
-        // Resolve vault ID
-        const vaultId = resolveVaultId(options.vaultId);
+        // Resolve vault ID - prompt if not provided
+        let vaultId = options.vaultId || process.env.SKYFLOW_VAULT_ID;
+        if (!vaultId) {
+          // Try to get last used vault ID from config
+          try {
+            const config = loadConfig();
+            vaultId = await promptForVaultId(config.lastVaultId);
+          } catch {
+            vaultId = await promptForVaultId();
+          }
+        }
         logVerbose(`Using vault ID: ${vaultId}`);
+
+        // Resolve cluster ID - prompt if not provided
+        let clusterId = options.clusterId;
+        if (!clusterId) {
+          const vaultUrl = process.env.SKYFLOW_VAULT_URL;
+          if (vaultUrl) {
+            clusterId = extractClusterIdFromUrl(vaultUrl);
+            logVerbose(`Cluster ID extracted from vault URL: ${clusterId}`);
+          } else {
+            // Try to get last used cluster ID from config
+            try {
+              const config = loadConfig();
+              clusterId = await promptForClusterId(config.lastClusterId);
+            } catch {
+              clusterId = await promptForClusterId();
+            }
+          }
+        }
+        logVerbose(`Using cluster ID: ${clusterId}`);
+
+        // Save vault details for next time
+        updateLastVaultDetails(vaultId, clusterId);
 
         // Initialize Skyflow client
         const verbose = program.opts().verbose || false;
         const skyflowClient = initializeSkyflowClient(
           vaultId,
-          options.clusterId,
+          clusterId,
           options.environment,
           verbose
         );

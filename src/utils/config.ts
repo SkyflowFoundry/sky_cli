@@ -12,6 +12,9 @@ interface SkyflowConfig {
   bearerToken?: string;
   accountId?: string;
   workspaceID?: string;
+  lastVaultId?: string;
+  lastClusterId?: string;
+  lastVaultUrl?: string;
 }
 
 // Ensure config directory exists
@@ -72,9 +75,24 @@ export const loadConfig = (): SkyflowConfig => {
 export const saveConfig = (config: SkyflowConfig): void => {
   ensureConfigDir();
   fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2));
-  
+
   // Configure the API client
   if (config.bearerToken && config.accountId) {
     configure(config.bearerToken, config.accountId);
+  }
+};
+
+// Update last used vault details
+export const updateLastVaultDetails = (vaultId?: string, clusterId?: string, vaultUrl?: string): void => {
+  try {
+    const config = loadConfig();
+
+    if (vaultId) config.lastVaultId = vaultId;
+    if (clusterId) config.lastClusterId = clusterId;
+    if (vaultUrl) config.lastVaultUrl = vaultUrl;
+
+    saveConfig(config);
+  } catch (error) {
+    // Silently fail - not critical if we can't save last vault details
   }
 };

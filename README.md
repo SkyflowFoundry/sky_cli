@@ -12,7 +12,8 @@ A command-line interface for interacting with the Skyflow data privacy platform.
 - Insert sensitive data into vault tables
 - Detect and redact sensitive data (PII/PHI) using Skyflow Detect API
 - Restore original values from tokenized text
-- Interactive prompts for missing options
+- Interactive prompts for missing options with smart defaults
+- Automatic persistence of last-used vault configuration
 
 ## Installation
 
@@ -89,14 +90,25 @@ These commands use the Skyflow Node.js SDK and support multiple authentication m
    # Uses the bearer token stored in ~/.skyflow/config.json
    ```
 
-Additionally, set these environment variables:
+#### Vault Configuration
+
+For vault ID and cluster ID, the CLI provides flexible options (in priority order):
+
+1. **Command-line options**: `--vault-id` and `--cluster-id`
+2. **Environment variables**: `SKYFLOW_VAULT_ID` and `SKYFLOW_VAULT_URL`
+3. **Interactive prompts**: If not provided, the CLI will prompt you interactively, offering the last-used vault as a default
+
+The CLI automatically remembers your last-used vault details in `~/.skyflow/config.json`, so you only need to enter them once. When you create a vault with `sky create-vault`, those details are automatically saved for future use.
+
+**Optional**: Set these environment variables to skip prompts:
 
 ```bash
 export SKYFLOW_VAULT_ID="your-vault-id"
 export SKYFLOW_VAULT_URL="https://your-cluster.vault.skyflowapis.com"
+# OR
+export SKYFLOW_VAULT_ID="your-vault-id"
+# and use --cluster-id flag when needed
 ```
-
-Or provide them as command-line options (`--vault-id`, `--cluster-id`).
 
 ## Usage
 

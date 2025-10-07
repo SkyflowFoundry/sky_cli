@@ -2,7 +2,7 @@ import { Command } from 'commander';
 import * as api from '../utils/api';
 import * as prompts from '../utils/prompts';
 import { CreateVaultResult } from '../types';
-import { loadConfig } from '../utils/config';
+import { loadConfig, updateLastVaultDetails } from '../utils/config';
 import { setVerbose, verboseLog } from '../utils/logger';
 import inquirer from 'inquirer';
 import fs from 'fs';
@@ -135,6 +135,9 @@ export const createVaultCommand = (program: Command): void => {
           result.serviceAccountID = serviceAccount.clientID;
           result.serviceAccountApiKey = serviceAccount.apiKey;
         }
+
+        // Save vault details to config for easy reuse
+        updateLastVaultDetails(result.vault.vaultID, result.vault.clusterID, result.vault.vaultURL);
 
         // Display the result
         console.log('\n=== Vault Created Successfully ===\n');

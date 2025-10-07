@@ -336,18 +336,37 @@ export const promptForMissingOptions = async (options: VaultOptions): Promise<Va
 };
 
 // Prompt for vault ID if not provided
-export const promptForVaultId = async (): Promise<string> => {
+export const promptForVaultId = async (defaultVaultId?: string): Promise<string> => {
   const { vaultId } = await inquirer.prompt([
     {
       type: 'input',
       name: 'vaultId',
       message: 'Enter vault ID:',
+      default: defaultVaultId,
       validate: (input: string) => {
-        if (!input || !process.env.SKYFLOW_VAULT_ID) return 'Please enter a vault ID or press Ctrl+C to cancel';
+        if (!input) return 'Vault ID is required';
         return true;
       }
     }
   ]);
-  
+
   return vaultId;
+};
+
+// Prompt for cluster ID if not provided
+export const promptForClusterId = async (defaultClusterId?: string): Promise<string> => {
+  const { clusterId } = await inquirer.prompt([
+    {
+      type: 'input',
+      name: 'clusterId',
+      message: 'Enter cluster ID:',
+      default: defaultClusterId,
+      validate: (input: string) => {
+        if (!input) return 'Cluster ID is required';
+        return true;
+      }
+    }
+  ]);
+
+  return clusterId;
 };
