@@ -45,14 +45,14 @@ export const configureCommand = (program: Command): void => {
             process.exit(1);
           } else if (workspaces.length === 1) {
             // Auto-select the single workspace
-            workspaceID = workspaces[0].id;
-            console.log(`\nFound one workspace: ${workspaces[0].displayName} (${workspaces[0].regionName})`);
+            workspaceID = workspaces[0].ID;
+            console.log(`\nFound one workspace: ${workspaces[0].displayName} (${workspaces[0].name})`);
             console.log(`Using workspace ID: ${workspaceID}`);
           } else {
             // Prompt user to select from multiple workspaces
             const choices = workspaces.map(ws => ({
-              name: `${ws.displayName} - ${ws.regionName}`,
-              value: ws.id
+              name: `${ws.displayName} - ${ws.name} (${ws.type})`,
+              value: ws.ID
             }));
 
             const workspaceAnswer = await inquirer.prompt([

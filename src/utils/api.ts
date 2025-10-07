@@ -16,13 +16,16 @@ export interface VaultTemplate {
   description?: string;
 }
 
-// Interface for workspace/region
+// Interface for workspace
 export interface Workspace {
-  id: string;
-  regionName: string;
+  ID: string;
+  name: string;
   displayName: string;
-  regionUrl: string;
-  flagUrl?: string;
+  description?: string;
+  url: string;
+  type: string;
+  regionID: string;
+  status: string;
 }
 
 export const configure = (bearerToken: string, skyflowAccountId: string): void => {
@@ -76,12 +79,12 @@ export const getVaultTemplates = async (): Promise<VaultTemplate[]> => {
   }
 };
 
-// Fetch all workspaces/regions for an account
+// Fetch all workspaces for an account
 export const getWorkspaces = async (bearerToken: string, accountID: string): Promise<Workspace[]> => {
   try {
-    verboseLog('Fetching workspaces/regions...');
+    verboseLog('Fetching workspaces...');
     const response = await axios.get(
-      `${API_BASE_URL}/accounts/${accountID}/regions`,
+      `${API_BASE_URL}/workspaces`,
       {
         headers: {
           'Authorization': `Bearer ${bearerToken}`,
@@ -94,19 +97,12 @@ export const getWorkspaces = async (bearerToken: string, accountID: string): Pro
     verboseLog('Workspaces API response:');
     verboseLog(JSON.stringify(response.data, null, 2));
 
-    if (!response.data.regions || typeof response.data.regions !== 'object') {
+    if (!response.data.workspaces || !Array.isArray(response.data.workspaces)) {
       errorLog('Unexpected workspaces response format', response.data);
       throw new Error('Invalid workspace data format from API');
     }
 
-    // Convert regions object to array of Workspace objects
-    const workspaces: Workspace[] = Object.entries(response.data.regions).map(([id, data]: [string, any]) => ({
-      id,
-      regionName: data.regionName,
-      displayName: data.displayName,
-      regionUrl: data.regionUrl,
-      flagUrl: data.flagUrl
-    }));
+    const workspaces: Workspace[] = response.data.workspaces;
 
     verboseLog(`Found ${workspaces.length} workspace(s)`);
     return workspaces;
@@ -120,15 +116,15 @@ export const getWorkspaces = async (bearerToken: string, accountID: string): Pro
   }
 };
 
-// Helper function to extract cluster ID from region URL
-const extractClusterIdFromRegionUrl = (regionUrl: string): string => {
+// Helper function to extract cluster ID from workspace URL
+const extractClusterIdFromUrl = (url: string): string => {
   // Extract the first segment before .vault.skyflowapis.com
-  const match = regionUrl.match(/^([^.]+)\.vault\.skyflowapis/);
+  const match = url.match(/^([^.]+)\.vault\.skyflowapis/);
   if (match && match[1]) {
     return match[1];
   }
   // If no match, return the whole URL (fallback)
-  return regionUrl;
+  return url;
 };
 
 // Create a new vault
@@ -199,24 +195,44 @@ export const createVault = async (options: VaultOptions): Promise<VaultResponse>
 
     // Fetch workspace details to get vault URL and cluster ID
     verboseLog('Fetching workspace details to populate vault URL and cluster ID...');
+    verboseLog(`Token available: ${!!token}, AccountId available: ${!!accountId}`);
     let vaultURL = '';
     let clusterID = '';
 
     try {
-      if (token && accountId) {
+      if (!token || !accountId) {
+        console.warn('Warning: Unable to fetch workspace details - authentication not configured');
+        verboseLog('Token or accountId not set in API module');
+      } else {
+        verboseLog(`Calling getWorkspaces with accountId: ${accountId}, workspaceID: ${workspaceID}`);
         const workspaces = await getWorkspaces(token, accountId);
-        const workspace = workspaces.find(ws => ws.id === workspaceID);
+        verboseLog(`Fetched ${workspaces.length} workspace(s)`);
+
+        console.log(`\nDEBUG: Looking for workspace ID: ${workspaceID}`);
+        console.log(`DEBUG: Available workspaces:`);
+        workspaces.forEach(ws => {
+          console.log(`  - ID: ${ws.ID}`);
+          console.log(`    Name: ${ws.displayName} (${ws.name})`);
+          console.log(`    URL: ${ws.url}`);
+          console.log(`    Type: ${ws.type}`);
+        });
+
+        const workspace = workspaces.find(ws => ws.ID === workspaceID);
 
         if (workspace) {
-          vaultURL = `https://${workspace.regionUrl}`;
-          clusterID = extractClusterIdFromRegionUrl(workspace.regionUrl);
+          vaultURL = `https://${workspace.url}`;
+          clusterID = extractClusterIdFromUrl(workspace.url);
           verboseLog(`Found workspace details - URL: ${vaultURL}, Cluster ID: ${clusterID}`);
+          console.log(`\nMatched workspace: ${workspace.displayName}`);
+          console.log(`Vault URL: ${vaultURL}`);
+          console.log(`Cluster ID: ${clusterID}`);
         } else {
-          verboseWarn(`Workspace ${workspaceID} not found in regions list`);
+          console.warn(`\nWarning: Workspace ${workspaceID} not found in available workspaces`);
         }
       }
     } catch (error) {
-      verboseWarn(`Failed to fetch workspace details: ${error instanceof Error ? error.message : String(error)}`);
+      console.warn(`Warning: Failed to fetch workspace details: ${error instanceof Error ? error.message : String(error)}`);
+      verboseLog(`Full error: ${JSON.stringify(error, null, 2)}`);
       // Continue without vault URL and cluster ID - non-critical
     }
 
