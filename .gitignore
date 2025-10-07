@@ -7,3 +7,6 @@ dist/*
 .clinerules
 .DS_Store
 package-lock.json
+.env
+.env.local
+.env.*.local

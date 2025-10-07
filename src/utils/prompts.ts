@@ -60,22 +60,44 @@ export const promptForTemplateOrSchema = async (options: { template?: string, sc
   ]);
   
   if (method === 'template') {
-    const { template } = await inquirer.prompt([
+    const { templateChoice } = await inquirer.prompt([
       {
-        type: 'input',
-        name: 'template',
-        message: 'Enter template name:',
-        validate: (input: string) => {
-          if (!input) return 'Please enter a template name or press Ctrl+C to cancel';
-          if (/^[a-z0-9-]+$/.test(input)) {
-            return true;
-          }
-          return 'Template name must be lowercase alphanumeric with hyphens only';
-        }
+        type: 'list',
+        name: 'templateChoice',
+        message: 'Select a template:',
+        choices: [
+          { name: 'customer_identity', value: 'customer_identity' },
+          { name: 'payment', value: 'payment' },
+          { name: 'pii_data', value: 'pii_data' },
+          { name: 'scratch-template', value: 'scratch-template' },
+          { name: 'quickstart', value: 'quickstart' },
+          { name: 'plaid', value: 'plaid' },
+          { name: 'payments_acceptance_sample', value: 'payments_acceptance_sample' },
+          { name: 'Enter custom template name', value: 'custom' }
+        ]
       }
     ]);
-    
-    result.template = template;
+
+    if (templateChoice === 'custom') {
+      const { template } = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'template',
+          message: 'Enter custom template name:',
+          validate: (input: string) => {
+            if (!input) return 'Please enter a template name or press Ctrl+C to cancel';
+            if (/^[a-z0-9_-]+$/.test(input)) {
+              return true;
+            }
+            return 'Template name must be lowercase alphanumeric with hyphens or underscores only';
+          }
+        }
+      ]);
+
+      result.template = template;
+    } else {
+      result.template = templateChoice;
+    }
   } else {
     const { schema } = await inquirer.prompt([
       {
