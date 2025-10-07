@@ -1,3 +1,11 @@
 {
-  "enableAllProjectMcpServers": false
+  "enableAllProjectMcpServers": false,
+  "permissions": {
+    "allow": [
+      "Bash(npm run lint)",
+      "Bash(npm run build)",
+      "Bash(npm run test)",
+      "Bash(npm run test:*)"
+    ]
+  }
 }
