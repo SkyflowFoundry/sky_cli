@@ -121,7 +121,7 @@ sky create-vault --name testvault --description "My test vault"
 #### Available Options
 
 - `--name`: Name for the vault (lowercase, no special characters)
-- `--template`: Template to use for the vault
+- `--template`: Template to use for the vault (supports snake_case and kebab-case)
 - `--description`: Description for the vault
 - `--master-key`: Master encryption key for the vault
 - `--create-service-account`: Whether to create a service account (defaults to true)
@@ -129,12 +129,26 @@ sky create-vault --name testvault --description "My test vault"
 - `--workspace-id`: Workspace ID for the vault (required, but can be set via configuration)
 - `--verbose`: Enable detailed logging for debugging purposes
 
+#### Available Templates
+
+When running interactively, you can choose from these predefined templates:
+
+- `customer_identity`
+- `payment`
+- `pii_data`
+- `scratch-template`
+- `quickstart`
+- `plaid`
+- `payments_acceptance_sample`
+
+Or enter your own custom template name (must be lowercase alphanumeric with hyphens or underscores).
+
 #### Examples
 
 Using a template:
 
 ```bash
-sky create-vault --name testvault --template optional-template-name --description "Full string description of the vault."
+sky create-vault --name testvault --template customer_identity --description "Customer identity vault"
 ```
 
 Using a schema file:
