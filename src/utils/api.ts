@@ -120,14 +120,25 @@ export const getWorkspaces = async (bearerToken: string, accountID: string): Pro
   }
 };
 
+// Helper function to extract cluster ID from region URL
+const extractClusterIdFromRegionUrl = (regionUrl: string): string => {
+  // Extract the first segment before .vault.skyflowapis.com
+  const match = regionUrl.match(/^([^.]+)\.vault\.skyflowapis/);
+  if (match && match[1]) {
+    return match[1];
+  }
+  // If no match, return the whole URL (fallback)
+  return regionUrl;
+};
+
 // Create a new vault
 export const createVault = async (options: VaultOptions): Promise<VaultResponse> => {
   const { name, description, template, schema, workspaceID } = options;
-  
+
   if (!workspaceID) {
     throw new Error('Workspace ID is required for vault creation');
   }
-  
+
   let vaultSchema = undefined;
   if (schema) {
     try {
@@ -164,14 +175,14 @@ export const createVault = async (options: VaultOptions): Promise<VaultResponse>
     // According to the API documentation, the vault creation response just contains an ID field
     // Extract the vault ID from the response
     let vaultId: string | undefined;
-    
+
     if (typeof response.data === 'string') {
       // If the response is just a string, use it as the ID
       vaultId = response.data;
     } else if (response.data && typeof response.data === 'object') {
       // Check all possible field names for the ID
       const possibleIdFields = ['id', 'vaultID', 'vault_id', 'ID'];
-      
+
       for (const field of possibleIdFields) {
         if (response.data[field]) {
           verboseLog(`Found vault ID in field "${field}": ${response.data[field]}`);
@@ -180,19 +191,42 @@ export const createVault = async (options: VaultOptions): Promise<VaultResponse>
         }
       }
     }
-    
+
     if (!vaultId) {
       errorLog('Could not find vault ID in the API response', { responseData: response.data });
       throw new Error('Vault ID not found in API response');
     }
-    
+
+    // Fetch workspace details to get vault URL and cluster ID
+    verboseLog('Fetching workspace details to populate vault URL and cluster ID...');
+    let vaultURL = '';
+    let clusterID = '';
+
+    try {
+      if (token && accountId) {
+        const workspaces = await getWorkspaces(token, accountId);
+        const workspace = workspaces.find(ws => ws.id === workspaceID);
+
+        if (workspace) {
+          vaultURL = `https://${workspace.regionUrl}`;
+          clusterID = extractClusterIdFromRegionUrl(workspace.regionUrl);
+          verboseLog(`Found workspace details - URL: ${vaultURL}, Cluster ID: ${clusterID}`);
+        } else {
+          verboseWarn(`Workspace ${workspaceID} not found in regions list`);
+        }
+      }
+    } catch (error) {
+      verboseWarn(`Failed to fetch workspace details: ${error instanceof Error ? error.message : String(error)}`);
+      // Continue without vault URL and cluster ID - non-critical
+    }
+
     // Build the vault response using the input parameters and the ID from the response
     const vaultResponse = {
       vaultID: vaultId,
       name: name || '', // Use the input name
       description: description || '', // Use the input description
-      vaultURL: '', // This comes from a different API
-      clusterID: '', // This comes from a different API
+      vaultURL,
+      clusterID,
       workspaceID: workspaceID // Use the input workspaceID
     };
 

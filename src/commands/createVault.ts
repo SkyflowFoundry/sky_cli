@@ -142,17 +142,19 @@ export const createVaultCommand = (program: Command): void => {
         // Display the result
         console.log('\n=== Vault Created Successfully ===\n');
         console.log(`Name: ${result.vault.name}`);
-        console.log(`Description: ${result.vault.description}`);
+        console.log(`Description: ${result.vault.description || '(none)'}`);
         console.log(`Vault URL: ${result.vault.vaultURL}`);
         console.log(`Cluster ID: ${result.vault.clusterID}`);
         console.log(`Vault ID: ${result.vault.vaultID}`);
-        
+        console.log(`Workspace ID: ${result.vault.workspaceID}`);
+
         if (result.serviceAccountID) {
           console.log(`Service Account ID: ${result.serviceAccountID}`);
           console.log(`Service Account API Key: ${result.serviceAccountApiKey}`);
         }
-        
-        console.log('\nExport the following environment variables:');
+
+        console.log('\n=== Environment Variables ===\n');
+        console.log('Copy and paste these into your terminal:\n');
         console.log(`export SKYFLOW_VAULT_ID=${result.vault.vaultID}`);
         console.log(`export SKYFLOW_CLUSTER_ID=${result.vault.clusterID}`);
         console.log(`export SKYFLOW_VAULT_URL=${result.vault.vaultURL}`);
