@@ -5,15 +5,16 @@ import * as api from './api';
 import { verboseLog } from './logger';
 
 // Mapping of friendly template names to their display order
-// This defines the order and names shown to users
+// This defines the priority order for common templates (others shown alphabetically after)
 const TEMPLATE_NAME_MAP: Record<string, number> = {
   'customer_identity': 1,
   'payment': 2,
   'pii_data': 3,
   'scratch-template': 4,
   'quickstart': 5,
-  'plaid': 6,
-  'payments_acceptance_sample': 7
+  'detect': 6,
+  'plaid': 7,
+  'payments_acceptance_sample': 8
 };
 
 // Helper function to resolve a template name to its ID
@@ -130,33 +131,41 @@ export const promptForTemplateOrSchema = async (options: { template?: string, sc
       throw new Error('No templates available. Please use --schema option to provide a schema file.');
     }
 
-    // Build a map of template names to IDs for the known templates
+    // Build a map of template names to IDs and display names
     const nameToIdMap: Record<string, string> = {};
-    const availableKnownTemplates: string[] = [];
+    const templateChoices: Array<{ name: string; value: string; order: number }> = [];
 
-    // Match fetched templates with our known template names
+    // Build choices from all fetched templates
     for (const template of templates) {
       const templateNameLower = template.name.toLowerCase().replace(/\s+/g, '_');
+      nameToIdMap[templateNameLower] = template.ID;
 
-      // Check if this template matches one of our known templates
-      if (TEMPLATE_NAME_MAP[templateNameLower] !== undefined) {
-        nameToIdMap[templateNameLower] = template.ID;
-        availableKnownTemplates.push(templateNameLower);
+      // Use displayName if available, otherwise use the name
+      const displayName = template.name;
+
+      // Get sort order (known templates first, then alphabetically)
+      const sortOrder = TEMPLATE_NAME_MAP[templateNameLower] || 999;
+
+      templateChoices.push({
+        name: `${displayName} - ${template.description || 'No description'}`,
+        value: templateNameLower,
+        order: sortOrder
+      });
+    }
+
+    // Sort by predefined order first, then alphabetically by name
+    templateChoices.sort((a, b) => {
+      if (a.order !== b.order) {
+        return a.order - b.order;
       }
-    }
+      return a.name.localeCompare(b.name);
+    });
 
-    // Sort by the predefined order
-    availableKnownTemplates.sort((a, b) => TEMPLATE_NAME_MAP[a] - TEMPLATE_NAME_MAP[b]);
-
-    // Build choices for the prompt
-    const choices: Array<{ name: string; value: string }> = [];
-
-    // Add the known templates that were found
-    for (const templateName of availableKnownTemplates) {
-      choices.push({ name: templateName, value: templateName });
-    }
-
-    choices.push({ name: 'Enter custom template name', value: 'custom' });
+    // Build final choices list
+    const choices: Array<{ name: string; value: string }> = templateChoices.map(({ name, value }) => ({
+      name,
+      value
+    }));
 
     const { templateChoice } = await inquirer.prompt([
       {
@@ -167,39 +176,9 @@ export const promptForTemplateOrSchema = async (options: { template?: string, sc
       }
     ]);
 
-    if (templateChoice === 'custom') {
-      const { template } = await inquirer.prompt([
-        {
-          type: 'input',
-          name: 'template',
-          message: 'Enter custom template name:',
-          validate: (input: string) => {
-            if (!input) return 'Please enter a template name or press Ctrl+C to cancel';
-            if (/^[a-z0-9_-]+$/.test(input)) {
-              return true;
-            }
-            return 'Template name must be lowercase alphanumeric with hyphens or underscores only';
-          }
-        }
-      ]);
-
-      // Try to find the template ID from fetched templates
-      const matchedTemplate = templates.find(t =>
-        t.name.toLowerCase().replace(/\s+/g, '_') === template.toLowerCase()
-      );
-
-      if (matchedTemplate) {
-        verboseLog(`Matched custom template "${template}" to ID: ${matchedTemplate.ID}`);
-        result.template = matchedTemplate.ID;
-      } else {
-        console.error(`Error: Template "${template}" not found in available templates.`);
-        throw new Error(`Template "${template}" not found. Please choose from available templates or use --schema option.`);
-      }
-    } else {
-      // Use the template ID
-      result.template = nameToIdMap[templateChoice];
-      verboseLog(`Selected template: ${templateChoice}, ID: ${result.template}`);
-    }
+    // Use the template ID from the map
+    result.template = nameToIdMap[templateChoice];
+    verboseLog(`Selected template: ${templateChoice}, ID: ${result.template}`);
   } else {
     const { schema } = await inquirer.prompt([
       {

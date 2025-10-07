@@ -40,18 +40,23 @@ export const getVaultTemplates = async (): Promise<VaultTemplate[]> => {
     verboseLog('Fetching vault templates...');
     const response = await axios.get(
       `${API_BASE_URL}/vault-templates`,
-      { headers: getHeaders() }
+      {
+        headers: getHeaders(),
+        params: {
+          accountID: accountId
+        }
+      }
     );
 
     verboseLog('Vault templates API response:');
     verboseLog(JSON.stringify(response.data, null, 2));
 
-    if (!response.data.templates || !Array.isArray(response.data.templates)) {
+    if (!response.data.vaultTemplates || !Array.isArray(response.data.vaultTemplates)) {
       errorLog('Unexpected templates response format', response.data);
       throw new Error('Invalid template data format from API');
     }
 
-    return response.data.templates;
+    return response.data.vaultTemplates;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       errorLog(`Template API error: ${error.response.status}`, error.response.data);
