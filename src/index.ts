@@ -6,6 +6,7 @@ import { configureCommand } from './commands/configure';
 import { insertCommand } from './commands/insert';
 import { deidentifyCommand } from './commands/deidentify';
 import { reidentifyCommand } from './commands/reidentify';
+import { createConnectionCommand } from './commands/createConnection';
 import { loadConfig } from './utils/config';
 import { setVerbose } from './utils/logger';
 
@@ -30,6 +31,7 @@ createVaultCommand(program);
 insertCommand(program);
 deidentifyCommand(program);
 reidentifyCommand(program);
+createConnectionCommand(program);
 
 // Error handler for authentication
 program.hook('preAction', async (thisCommand, actionCommand) => {

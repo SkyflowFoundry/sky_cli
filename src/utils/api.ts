@@ -1,6 +1,6 @@
 import axios from 'axios';
 import fs from 'fs';
-import { VaultOptions, ServiceAccount, Role, VaultResponse } from '../types';
+import { VaultOptions, ServiceAccount, Role, VaultResponse, Connection, CreateConnectionResponse } from '../types';
 import { verboseLog, verboseWarn, errorLog } from './logger';
 
 const API_BASE_URL = 'https://manage.skyflowapis.com/v1';
@@ -228,5 +228,31 @@ export const verifyVaultAccess = async (
     return true;
   } catch (error) {
     return false;
+  }
+};
+
+// Create a new connection
+export const createConnection = async (connection: Connection): Promise<CreateConnectionResponse> => {
+  try {
+    verboseLog('Creating connection with payload:');
+    verboseLog(JSON.stringify(connection, null, 2));
+    const route = connection.mode == "EGRESS" ? 'outboundRoutes' : 'inboundRoutes';
+    const response = await axios.post(
+      `${API_BASE_URL}/gateway/${route}`,
+      connection,
+      { headers: getHeaders() }
+    );
+
+    verboseLog('Connection creation API response:');
+    verboseLog(JSON.stringify(response.data, null, 2));
+    
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      errorLog(`Connection creation failed: ${error.response.status}`, error.response.data);
+      throw new Error(`Connection creation failed: ${error.response.status} - ${JSON.stringify(error.response.data)}`);
+    }
+    errorLog('Connection creation unexpected error', error);
+    throw new Error(`Connection creation failed: ${error instanceof Error ? error.message : String(error)}`);
   }
 };
