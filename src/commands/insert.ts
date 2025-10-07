@@ -8,6 +8,7 @@ import {
   resolveVaultId,
 } from '../utils/skyflow';
 import { logVerbose } from '../utils/logger';
+import { readStdin } from '../utils/input';
 
 export const insertCommand = (program: Command): void => {
   program
@@ -154,24 +155,3 @@ export const insertCommand = (program: Command): void => {
     });
 };
 
-/**
- * Read input from stdin
- */
-const readStdin = (): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    let data = '';
-    process.stdin.setEncoding('utf8');
-
-    process.stdin.on('data', (chunk) => {
-      data += chunk;
-    });
-
-    process.stdin.on('end', () => {
-      resolve(data.trim());
-    });
-
-    process.stdin.on('error', (error) => {
-      reject(error);
-    });
-  });
-};

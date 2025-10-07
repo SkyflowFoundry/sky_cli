@@ -15,26 +15,9 @@ import {
   resolveVaultId,
 } from '../utils/skyflow';
 import { logVerbose } from '../utils/logger';
+import { readStdin } from '../utils/input';
+import { ENTITY_MAP, AVAILABLE_ENTITIES } from '../utils/entities';
 
-// Map of entity aliases to DetectEntities enum values
-const ENTITY_MAP: Record<string, DetectEntities> = {
-  SSN: DetectEntities.SSN,
-  CREDIT_CARD: DetectEntities.CREDIT_CARD,
-  CREDIT_CARD_NUMBER: DetectEntities.CREDIT_CARD,
-  EMAIL: DetectEntities.EMAIL_ADDRESS,
-  EMAIL_ADDRESS: DetectEntities.EMAIL_ADDRESS,
-  PHONE_NUMBER: DetectEntities.PHONE_NUMBER,
-  PHONE: DetectEntities.PHONE_NUMBER,
-  NAME: DetectEntities.NAME,
-  DOB: DetectEntities.DOB,
-  DATE_OF_BIRTH: DetectEntities.DOB,
-  ACCOUNT_NUMBER: DetectEntities.ACCOUNT_NUMBER,
-  DRIVER_LICENSE: DetectEntities.DRIVER_LICENSE,
-  PASSPORT_NUMBER: DetectEntities.PASSPORT_NUMBER,
-  PASSPORT: DetectEntities.PASSPORT_NUMBER,
-};
-
-const AVAILABLE_ENTITIES = Object.keys(ENTITY_MAP).join(', ');
 
 export const deidentifyCommand = (program: Command): void => {
   program
@@ -197,24 +180,3 @@ export const deidentifyCommand = (program: Command): void => {
     });
 };
 
-/**
- * Read input from stdin
- */
-const readStdin = (): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    let data = '';
-    process.stdin.setEncoding('utf8');
-
-    process.stdin.on('data', (chunk) => {
-      data += chunk;
-    });
-
-    process.stdin.on('end', () => {
-      resolve(data.trim());
-    });
-
-    process.stdin.on('error', (error) => {
-      reject(error);
-    });
-  });
-};

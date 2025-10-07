@@ -77,6 +77,8 @@ export interface ReidentifyCommandOptions {
   vaultId?: string;
   clusterId?: string;
   environment?: string;
+}
+
 export interface FunctionInfo {
   deploymentID: string;
   method: string;
