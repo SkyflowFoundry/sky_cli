@@ -52,14 +52,18 @@ You will be prompted to enter:
 
 1. Your Skyflow Bearer Token
 2. Your Skyflow Account ID
-3. Your Skyflow Workspace ID (required for vault creation)
+
+The CLI will then automatically fetch your available workspaces and:
+
+- If you have only one workspace, it will be selected automatically
+- If you have multiple workspaces, you'll be prompted to choose one
 
 You can also set these as environment variables:
 
 ```bash
 export SKYFLOW_BEARER_TOKEN="your-bearer-token"
 export SKYFLOW_ACCOUNT_ID="your-account-id"
-export SKYFLOW_WORKSPACE_ID="your-workspace-id"
+export SKYFLOW_WORKSPACE_ID="your-workspace-id"  # Optional - will be fetched if not set
 ```
 
 ### For Data Operations Commands (Insert, Deidentify, Reidentify)
@@ -143,17 +147,7 @@ sky create-vault --name testvault --description "My test vault"
 
 #### Available Templates
 
-When running interactively, you can choose from these predefined templates:
-
-- `customer_identity`
-- `payment`
-- `pii_data`
-- `scratch-template`
-- `quickstart`
-- `plaid`
-- `payments_acceptance_sample`
-
-Or enter your own custom template name (must be lowercase alphanumeric with hyphens or underscores).
+When running interactively (`sky create-vault`), the CLI will fetch and display all available templates from your Skyflow account. You can also specify a template name directly using the `--template` option with template names like `customer_identity`, `payment`, `pii_data`, `detect`, etc.
 
 #### Examples
 

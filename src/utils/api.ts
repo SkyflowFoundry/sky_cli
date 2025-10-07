@@ -16,6 +16,15 @@ export interface VaultTemplate {
   description?: string;
 }
 
+// Interface for workspace/region
+export interface Workspace {
+  id: string;
+  regionName: string;
+  displayName: string;
+  regionUrl: string;
+  flagUrl?: string;
+}
+
 export const configure = (bearerToken: string, skyflowAccountId: string): void => {
   token = bearerToken;
   accountId = skyflowAccountId;
@@ -64,6 +73,50 @@ export const getVaultTemplates = async (): Promise<VaultTemplate[]> => {
     }
     errorLog('Template API unexpected error', error);
     throw new Error(`Get vault templates failed: ${error instanceof Error ? error.message : String(error)}`);
+  }
+};
+
+// Fetch all workspaces/regions for an account
+export const getWorkspaces = async (bearerToken: string, accountID: string): Promise<Workspace[]> => {
+  try {
+    verboseLog('Fetching workspaces/regions...');
+    const response = await axios.get(
+      `${API_BASE_URL}/accounts/${accountID}/regions`,
+      {
+        headers: {
+          'Authorization': `Bearer ${bearerToken}`,
+          'X-SKYFLOW-ACCOUNT-ID': accountID,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    verboseLog('Workspaces API response:');
+    verboseLog(JSON.stringify(response.data, null, 2));
+
+    if (!response.data.regions || typeof response.data.regions !== 'object') {
+      errorLog('Unexpected workspaces response format', response.data);
+      throw new Error('Invalid workspace data format from API');
+    }
+
+    // Convert regions object to array of Workspace objects
+    const workspaces: Workspace[] = Object.entries(response.data.regions).map(([id, data]: [string, any]) => ({
+      id,
+      regionName: data.regionName,
+      displayName: data.displayName,
+      regionUrl: data.regionUrl,
+      flagUrl: data.flagUrl
+    }));
+
+    verboseLog(`Found ${workspaces.length} workspace(s)`);
+    return workspaces;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      errorLog(`Workspaces API error: ${error.response.status}`, error.response.data);
+      throw new Error(`Get workspaces failed: ${error.response.status} - ${JSON.stringify(error.response.data)}`);
+    }
+    errorLog('Workspaces API unexpected error', error);
+    throw new Error(`Get workspaces failed: ${error instanceof Error ? error.message : String(error)}`);
   }
 };
 
