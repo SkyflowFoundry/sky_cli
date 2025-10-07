@@ -4,6 +4,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const commander_1 = require("commander");
 const createVault_1 = require("./commands/createVault");
 const configure_1 = require("./commands/configure");
+const insert_1 = require("./commands/insert");
+const deidentify_1 = require("./commands/deidentify");
+const reidentify_1 = require("./commands/reidentify");
 const config_1 = require("./utils/config");
 const logger_1 = require("./utils/logger");
 // Create the CLI program
@@ -22,14 +25,23 @@ program
 // Register commands
 (0, configure_1.configureCommand)(program);
 (0, createVault_1.createVaultCommand)(program);
+(0, insert_1.insertCommand)(program);
+(0, deidentify_1.deidentifyCommand)(program);
+(0, reidentify_1.reidentifyCommand)(program);
 // Error handler for authentication
 program.hook('preAction', async (thisCommand, actionCommand) => {
+    const commandName = actionCommand.name();
     // Skip authentication for configure command
-    if (actionCommand.name() === 'configure') {
+    if (commandName === 'configure') {
+        return;
+    }
+    // Skip authentication for SDK commands (they handle their own auth)
+    const sdkCommands = ['insert', 'deidentify', 'reidentify'];
+    if (sdkCommands.includes(commandName)) {
         return;
     }
     try {
-        // Load and validate configuration
+        // Load and validate configuration for API commands
         (0, config_1.loadConfig)();
     }
     catch (error) {

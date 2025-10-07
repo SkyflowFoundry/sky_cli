@@ -3,7 +3,7 @@
  * Simple logger utility that controls output based on verbosity level
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.errorLog = exports.verboseWarn = exports.verboseLog = exports.isVerboseMode = exports.setVerbose = void 0;
+exports.logError = exports.logVerbose = exports.errorLog = exports.verboseWarn = exports.verboseLog = exports.isVerboseMode = exports.setVerbose = void 0;
 let isVerbose = false;
 /**
  * Set the global verbose flag
@@ -49,3 +49,11 @@ const errorLog = (message, details) => {
     }
 };
 exports.errorLog = errorLog;
+/**
+ * Alias for verboseLog for consistency
+ */
+exports.logVerbose = exports.verboseLog;
+/**
+ * Alias for errorLog for consistency
+ */
+exports.logError = exports.errorLog;

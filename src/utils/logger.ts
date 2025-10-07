@@ -46,3 +46,13 @@ export const errorLog = (message: string, details?: any): void => {
     console.error(`ERROR: ${message}`);
   }
 };
+
+/**
+ * Alias for verboseLog for consistency
+ */
+export const logVerbose = verboseLog;
+
+/**
+ * Alias for errorLog for consistency
+ */
+export const logError = errorLog;

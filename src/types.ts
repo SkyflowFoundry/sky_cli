@@ -39,3 +39,42 @@ export interface CreateVaultResult {
   serviceAccountID?: string;
   serviceAccountApiKey?: string;
 }
+
+// Insert command types
+export interface InsertCommandOptions {
+  table: string;
+  data?: string;
+  returnTokens?: boolean;
+  continueOnError?: boolean;
+  upsertColumn?: string;
+  vaultId?: string;
+  clusterId?: string;
+  environment?: string;
+}
+
+export interface InsertData {
+  [key: string]: unknown;
+}
+
+// Deidentify command types
+export interface DeidentifyCommandOptions {
+  text?: string;
+  entities?: string;
+  tokenType?: 'vault_token' | 'entity_only' | 'random_token';
+  output?: 'text' | 'json';
+  vaultId?: string;
+  clusterId?: string;
+  environment?: string;
+}
+
+// Reidentify command types
+export interface ReidentifyCommandOptions {
+  text?: string;
+  plainText?: string;
+  masked?: string;
+  redacted?: string;
+  output?: 'text' | 'json';
+  vaultId?: string;
+  clusterId?: string;
+  environment?: string;
+}
