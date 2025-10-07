@@ -9,6 +9,13 @@ const API_BASE_URL = 'https://manage.skyflowapis.com/v1';
 let token: string | null = null;
 let accountId: string | null = null;
 
+// Interface for vault template
+export interface VaultTemplate {
+  ID: string;
+  name: string;
+  description?: string;
+}
+
 export const configure = (bearerToken: string, skyflowAccountId: string): void => {
   token = bearerToken;
   accountId = skyflowAccountId;
@@ -25,6 +32,34 @@ const getHeaders = (customToken?: string) => {
     'X-SKYFLOW-ACCOUNT-ID': accountId!,
     'Content-Type': 'application/json'
   };
+};
+
+// Fetch all vault templates
+export const getVaultTemplates = async (): Promise<VaultTemplate[]> => {
+  try {
+    verboseLog('Fetching vault templates...');
+    const response = await axios.get(
+      `${API_BASE_URL}/vault-templates`,
+      { headers: getHeaders() }
+    );
+
+    verboseLog('Vault templates API response:');
+    verboseLog(JSON.stringify(response.data, null, 2));
+
+    if (!response.data.templates || !Array.isArray(response.data.templates)) {
+      errorLog('Unexpected templates response format', response.data);
+      throw new Error('Invalid template data format from API');
+    }
+
+    return response.data.templates;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      errorLog(`Template API error: ${error.response.status}`, error.response.data);
+      throw new Error(`Get vault templates failed: ${error.response.status} - ${JSON.stringify(error.response.data)}`);
+    }
+    errorLog('Template API unexpected error', error);
+    throw new Error(`Get vault templates failed: ${error instanceof Error ? error.message : String(error)}`);
+  }
 };
 
 // Create a new vault
