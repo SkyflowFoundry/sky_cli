@@ -67,27 +67,15 @@ export const generateRandomName = (): string => {
 };
 
 // Prompt for vault name if not provided
+// Note: If no name is provided, auto-generates one for non-interactive mode
 export const promptForName = async (providedName?: string): Promise<string> => {
   if (providedName) return providedName;
-  
+
+  // Auto-generate a name for non-interactive mode
   const defaultName = generateRandomName();
-  
-  const { name } = await inquirer.prompt([
-    {
-      type: 'input',
-      name: 'name',
-      message: 'Enter vault name (no special chars):',
-      default: defaultName,
-      validate: (input: string) => {
-        if (/^[a-zA-Z0-9-]+$/.test(input)) {
-          return true;
-        }
-        return 'Name must be alphanumeric with hyphens only';
-      }
-    }
-  ]);
-  
-  return name;
+  verboseLog(`No vault name provided, using auto-generated name: ${defaultName}`);
+
+  return defaultName;
 };
 
 // Prompt for template or schema
@@ -210,63 +198,19 @@ export const promptForTemplateOrSchema = async (options: { template?: string, sc
 };
 
 // Prompt for description if not provided
+// Note: Description is truly optional - API provides a default if not specified
 export const promptForDescription = async (providedDesc?: string): Promise<string | undefined> => {
-  if (providedDesc) return providedDesc;
-  
-  const { useDesc } = await inquirer.prompt([
-    {
-      type: 'confirm',
-      name: 'useDesc',
-      message: 'Would you like to add a description?',
-      default: false
-    }
-  ]);
-  
-  if (!useDesc) return undefined;
-  
-  const { description } = await inquirer.prompt([
-    {
-      type: 'input',
-      name: 'description',
-      message: 'Enter vault description:',
-      validate: (input: string) => {
-        if (!input) return 'Please enter a description or press Ctrl+C to cancel';
-        return true;
-      }
-    }
-  ]);
-  
-  return description;
+  // If description is provided or not provided, return it as-is
+  // This allows non-interactive mode to work without prompting
+  return providedDesc;
 };
 
 // Prompt for master key if not provided
+// Note: Master key is truly optional - vaults can be created without one
 export const promptForMasterKey = async (providedKey?: string): Promise<string | undefined> => {
-  if (providedKey) return providedKey;
-  
-  const { useMasterKey } = await inquirer.prompt([
-    {
-      type: 'confirm',
-      name: 'useMasterKey',
-      message: 'Would you like to specify a master encryption key?',
-      default: false
-    }
-  ]);
-  
-  if (!useMasterKey) return undefined;
-  
-  const { masterKey } = await inquirer.prompt([
-    {
-      type: 'password',
-      name: 'masterKey',
-      message: 'Enter master encryption key:',
-      validate: (input: string) => {
-        if (!input) return 'Please enter a key or press Ctrl+C to cancel';
-        return true;
-      }
-    }
-  ]);
-  
-  return masterKey;
+  // If master key is provided or not provided, return it as-is
+  // This allows non-interactive mode to work without prompting
+  return providedKey;
 };
 
 // Handle all prompts for vault creation
