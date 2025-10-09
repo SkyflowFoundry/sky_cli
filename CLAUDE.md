@@ -23,8 +23,13 @@ This is a Node.js CLI tool for managing Skyflow vaults and service accounts, bui
 ### Key Patterns
 
 1. **Configuration Management**: Uses `~/.skyflow/config.json` for persistent config, with environment variable fallbacks
+   - Stores: `bearerToken`, `accountId`, `workspaceID`, `lastVaultId`, `lastClusterId`, `lastVaultUrl`
+   - Last-used vault details are automatically saved and offered as defaults in interactive prompts
 2. **Authentication Flow**: Pre-action hooks validate configuration before command execution (except for `configure` command)
 3. **Interactive Prompts**: Uses inquirer.js to prompt for missing required options
+   - All data operation commands (`insert`, `deidentify`, `reidentify`) prompt for missing vault-id and cluster-id
+   - Prompts offer last-used values as defaults for improved UX
+   - Parameter resolution priority: CLI options → Environment variables → Interactive prompts with defaults
 4. **Error Handling**: Comprehensive error handling with user-friendly messages and proper exit codes
 5. **Verbose Logging**: Global `--verbose` flag enables detailed debugging output throughout the application
 

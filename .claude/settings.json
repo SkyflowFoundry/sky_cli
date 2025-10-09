@@ -1,0 +1,17 @@
+{
+  "enableAllProjectMcpServers": false,
+  "permissions": {
+    "allow": [
+      "Bash(npm run lint)",
+      "Bash(npm run build)",
+      "Bash(npm run test)",
+      "Bash(npm run test:*)",
+      "Bash(npm run format)",
+      "Bash(npm run format:*)",
+      "Bash(sky create-vault)",
+      "Bash(sky create-vault *)",
+      "Bash(sky deidentify)",
+      "Bash(sky deidentify *)"
+    ]
+  }
+}

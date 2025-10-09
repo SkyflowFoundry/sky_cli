@@ -9,6 +9,25 @@ const API_BASE_URL = 'https://manage.skyflowapis.com/v1';
 let token: string | null = null;
 let accountId: string | null = null;
 
+// Interface for vault template
+export interface VaultTemplate {
+  ID: string;
+  name: string;
+  description?: string;
+}
+
+// Interface for workspace
+export interface Workspace {
+  ID: string;
+  name: string;
+  displayName: string;
+  description?: string;
+  url: string;
+  type: string;
+  regionID: string;
+  status: string;
+}
+
 export const configure = (bearerToken: string, skyflowAccountId: string): void => {
   token = bearerToken;
   accountId = skyflowAccountId;
@@ -27,14 +46,95 @@ const getHeaders = (customToken?: string) => {
   };
 };
 
+// Fetch all vault templates
+export const getVaultTemplates = async (): Promise<VaultTemplate[]> => {
+  try {
+    verboseLog('Fetching vault templates...');
+    const response = await axios.get(
+      `${API_BASE_URL}/vault-templates`,
+      {
+        headers: getHeaders(),
+        params: {
+          accountID: accountId
+        }
+      }
+    );
+
+    verboseLog('Vault templates API response:');
+    verboseLog(JSON.stringify(response.data, null, 2));
+
+    if (!response.data.vaultTemplates || !Array.isArray(response.data.vaultTemplates)) {
+      errorLog('Unexpected templates response format', response.data);
+      throw new Error('Invalid template data format from API');
+    }
+
+    return response.data.vaultTemplates;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      errorLog(`Template API error: ${error.response.status}`, error.response.data);
+      throw new Error(`Get vault templates failed: ${error.response.status} - ${JSON.stringify(error.response.data)}`);
+    }
+    errorLog('Template API unexpected error', error);
+    throw new Error(`Get vault templates failed: ${error instanceof Error ? error.message : String(error)}`);
+  }
+};
+
+// Fetch all workspaces for an account
+export const getWorkspaces = async (bearerToken: string, accountID: string): Promise<Workspace[]> => {
+  try {
+    verboseLog('Fetching workspaces...');
+    const response = await axios.get(
+      `${API_BASE_URL}/workspaces`,
+      {
+        headers: {
+          'Authorization': `Bearer ${bearerToken}`,
+          'X-SKYFLOW-ACCOUNT-ID': accountID,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    verboseLog('Workspaces API response:');
+    verboseLog(JSON.stringify(response.data, null, 2));
+
+    if (!response.data.workspaces || !Array.isArray(response.data.workspaces)) {
+      errorLog('Unexpected workspaces response format', response.data);
+      throw new Error('Invalid workspace data format from API');
+    }
+
+    const workspaces: Workspace[] = response.data.workspaces;
+
+    verboseLog(`Found ${workspaces.length} workspace(s)`);
+    return workspaces;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      errorLog(`Workspaces API error: ${error.response.status}`, error.response.data);
+      throw new Error(`Get workspaces failed: ${error.response.status} - ${JSON.stringify(error.response.data)}`);
+    }
+    errorLog('Workspaces API unexpected error', error);
+    throw new Error(`Get workspaces failed: ${error instanceof Error ? error.message : String(error)}`);
+  }
+};
+
+// Helper function to extract cluster ID from workspace URL
+const extractClusterIdFromUrl = (url: string): string => {
+  // Extract the first segment before .vault.skyflowapis.com
+  const match = url.match(/^([^.]+)\.vault\.skyflowapis/);
+  if (match && match[1]) {
+    return match[1];
+  }
+  // If no match, return the whole URL (fallback)
+  return url;
+};
+
 // Create a new vault
 export const createVault = async (options: VaultOptions): Promise<VaultResponse> => {
   const { name, description, template, schema, workspaceID } = options;
-  
+
   if (!workspaceID) {
     throw new Error('Workspace ID is required for vault creation');
   }
-  
+
   let vaultSchema = undefined;
   if (schema) {
     try {
@@ -71,14 +171,14 @@ export const createVault = async (options: VaultOptions): Promise<VaultResponse>
     // According to the API documentation, the vault creation response just contains an ID field
     // Extract the vault ID from the response
     let vaultId: string | undefined;
-    
+
     if (typeof response.data === 'string') {
       // If the response is just a string, use it as the ID
       vaultId = response.data;
     } else if (response.data && typeof response.data === 'object') {
       // Check all possible field names for the ID
       const possibleIdFields = ['id', 'vaultID', 'vault_id', 'ID'];
-      
+
       for (const field of possibleIdFields) {
         if (response.data[field]) {
           verboseLog(`Found vault ID in field "${field}": ${response.data[field]}`);
@@ -87,19 +187,62 @@ export const createVault = async (options: VaultOptions): Promise<VaultResponse>
         }
       }
     }
-    
+
     if (!vaultId) {
       errorLog('Could not find vault ID in the API response', { responseData: response.data });
       throw new Error('Vault ID not found in API response');
     }
-    
+
+    // Fetch workspace details to get vault URL and cluster ID
+    verboseLog('Fetching workspace details to populate vault URL and cluster ID...');
+    verboseLog(`Token available: ${!!token}, AccountId available: ${!!accountId}`);
+    let vaultURL = '';
+    let clusterID = '';
+
+    try {
+      if (!token || !accountId) {
+        console.warn('Warning: Unable to fetch workspace details - authentication not configured');
+        verboseLog('Token or accountId not set in API module');
+      } else {
+        verboseLog(`Calling getWorkspaces with accountId: ${accountId}, workspaceID: ${workspaceID}`);
+        const workspaces = await getWorkspaces(token, accountId);
+        verboseLog(`Fetched ${workspaces.length} workspace(s)`);
+
+        console.log(`\nDEBUG: Looking for workspace ID: ${workspaceID}`);
+        console.log(`DEBUG: Available workspaces:`);
+        workspaces.forEach(ws => {
+          console.log(`  - ID: ${ws.ID}`);
+          console.log(`    Name: ${ws.displayName} (${ws.name})`);
+          console.log(`    URL: ${ws.url}`);
+          console.log(`    Type: ${ws.type}`);
+        });
+
+        const workspace = workspaces.find(ws => ws.ID === workspaceID);
+
+        if (workspace) {
+          vaultURL = `https://${workspace.url}`;
+          clusterID = extractClusterIdFromUrl(workspace.url);
+          verboseLog(`Found workspace details - URL: ${vaultURL}, Cluster ID: ${clusterID}`);
+          console.log(`\nMatched workspace: ${workspace.displayName}`);
+          console.log(`Vault URL: ${vaultURL}`);
+          console.log(`Cluster ID: ${clusterID}`);
+        } else {
+          console.warn(`\nWarning: Workspace ${workspaceID} not found in available workspaces`);
+        }
+      }
+    } catch (error) {
+      console.warn(`Warning: Failed to fetch workspace details: ${error instanceof Error ? error.message : String(error)}`);
+      verboseLog(`Full error: ${JSON.stringify(error, null, 2)}`);
+      // Continue without vault URL and cluster ID - non-critical
+    }
+
     // Build the vault response using the input parameters and the ID from the response
     const vaultResponse = {
       vaultID: vaultId,
       name: name || '', // Use the input name
       description: description || '', // Use the input description
-      vaultURL: '', // This comes from a different API
-      clusterID: '', // This comes from a different API
+      vaultURL,
+      clusterID,
       workspaceID: workspaceID // Use the input workspaceID
     };
 

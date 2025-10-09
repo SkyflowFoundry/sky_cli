@@ -2,7 +2,7 @@ import { Command } from 'commander';
 import * as api from '../utils/api';
 import * as prompts from '../utils/prompts';
 import { CreateVaultResult } from '../types';
-import { loadConfig } from '../utils/config';
+import { loadConfig, updateLastVaultDetails } from '../utils/config';
 import { setVerbose, verboseLog } from '../utils/logger';
 import inquirer from 'inquirer';
 import fs from 'fs';
@@ -136,20 +136,25 @@ export const createVaultCommand = (program: Command): void => {
           result.serviceAccountApiKey = serviceAccount.apiKey;
         }
 
+        // Save vault details to config for easy reuse
+        updateLastVaultDetails(result.vault.vaultID, result.vault.clusterID, result.vault.vaultURL);
+
         // Display the result
         console.log('\n=== Vault Created Successfully ===\n');
         console.log(`Name: ${result.vault.name}`);
-        console.log(`Description: ${result.vault.description}`);
+        console.log(`Description: ${result.vault.description || '(none)'}`);
         console.log(`Vault URL: ${result.vault.vaultURL}`);
         console.log(`Cluster ID: ${result.vault.clusterID}`);
         console.log(`Vault ID: ${result.vault.vaultID}`);
-        
+        console.log(`Workspace ID: ${result.vault.workspaceID}`);
+
         if (result.serviceAccountID) {
           console.log(`Service Account ID: ${result.serviceAccountID}`);
           console.log(`Service Account API Key: ${result.serviceAccountApiKey}`);
         }
-        
-        console.log('\nExport the following environment variables:');
+
+        console.log('\n=== Environment Variables ===\n');
+        console.log('Copy and paste these into your terminal:\n');
         console.log(`export SKYFLOW_VAULT_ID=${result.vault.vaultID}`);
         console.log(`export SKYFLOW_CLUSTER_ID=${result.vault.clusterID}`);
         console.log(`export SKYFLOW_VAULT_URL=${result.vault.vaultURL}`);

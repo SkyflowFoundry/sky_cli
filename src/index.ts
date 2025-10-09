@@ -3,6 +3,9 @@
 import { Command } from 'commander';
 import { createVaultCommand } from './commands/createVault';
 import { configureCommand } from './commands/configure';
+import { insertCommand } from './commands/insert';
+import { deidentifyCommand } from './commands/deidentify';
+import { reidentifyCommand } from './commands/reidentify';
 import { createConnectionCommand } from './commands/createConnection';
 import { loadConfig } from './utils/config';
 import { setVerbose } from './utils/logger';
@@ -25,17 +28,28 @@ program
 // Register commands
 configureCommand(program);
 createVaultCommand(program);
+insertCommand(program);
+deidentifyCommand(program);
+reidentifyCommand(program);
 createConnectionCommand(program);
 
 // Error handler for authentication
 program.hook('preAction', async (thisCommand, actionCommand) => {
+  const commandName = actionCommand.name();
+
   // Skip authentication for configure command
-  if (actionCommand.name() === 'configure') {
+  if (commandName === 'configure') {
+    return;
+  }
+
+  // Skip authentication for SDK commands (they handle their own auth)
+  const sdkCommands = ['insert', 'deidentify', 'reidentify'];
+  if (sdkCommands.includes(commandName)) {
     return;
   }
 
   try {
-    // Load and validate configuration
+    // Load and validate configuration for API commands
     loadConfig();
   } catch (error) {
     console.error(`Authentication Error: ${error instanceof Error ? error.message : String(error)}`);
