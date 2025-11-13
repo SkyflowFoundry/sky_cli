@@ -16,7 +16,7 @@ export const createVaultCommand = (program: Command): void => {
     .option('--template <template>', 'Template to use for the vault')
     .option('--description <description>', 'Description for the vault')
     .option('--master-key <key>', 'Master encryption key for the vault')
-    .option('--create-service-account [boolean]', 'Create a service account for the vault', false)
+    .option('--create-service-account [boolean]', 'Create a service account for the vault', true)
     .option('--schema <path>', 'Path to JSON schema file for the vault')
     .option('--workspace-id <id>', 'Workspace ID for the vault')
     .option('--verbose', 'Enable verbose logging for debugging')
