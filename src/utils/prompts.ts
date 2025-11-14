@@ -17,6 +17,14 @@ const TEMPLATE_NAME_MAP: Record<string, number> = {
   'payments_acceptance_sample': 8
 };
 
+// Helper function to truncate long descriptions for better readability
+const truncateDescription = (description: string, maxLength: number = 100): string => {
+  if (!description || description.length <= maxLength) {
+    return description;
+  }
+  return description.substring(0, maxLength).trim() + '...';
+};
+
 // Helper function to resolve a template name to its ID
 export const resolveTemplateNameToId = async (templateName: string): Promise<string> => {
   // If it's already an ID format (UUID-like), return as-is
@@ -135,7 +143,7 @@ export const promptForTemplateOrSchema = async (options: { template?: string, sc
       const sortOrder = TEMPLATE_NAME_MAP[templateNameLower] || 999;
 
       templateChoices.push({
-        name: `${displayName} - ${template.description || 'No description'}`,
+        name: `${displayName} - ${truncateDescription(template.description || 'No description')}`,
         value: templateNameLower,
         order: sortOrder
       });
