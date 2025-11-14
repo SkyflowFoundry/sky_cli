@@ -248,7 +248,7 @@ export const promptForMissingOptions = async (options: VaultOptions): Promise<Va
         type: 'confirm',
         name: 'createServiceAccount',
         message: 'Create a service account for this vault?',
-        default: false
+        default: true
       }
     ]);
 
