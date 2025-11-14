@@ -9,9 +9,9 @@
       "Bash(npm run format)",
       "Bash(npm run format:*)",
       "Bash(sky create-vault)",
-      "Bash(sky create-vault *)",
+      "Bash(sky create-vault:*)",
       "Bash(sky deidentify)",
-      "Bash(sky deidentify *)"
+      "Bash(sky deidentify:*)"
     ]
   }
 }
