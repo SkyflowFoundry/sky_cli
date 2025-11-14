@@ -32,6 +32,9 @@ npm install
 # Build the CLI
 npm run build
 
+# Make the compiled file executable
+chmod +x dist/index.js
+
 # Install the cloned CLI globally with npm
 npm i -g .
 ```
